@@ -101,4 +101,9 @@ IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de
 
 ## Publicação
 
-GitHub Pages, branch `main`, pasta raiz (`.nojekyll` presente). Site atualiza após cada `git push`.
+GitHub Pages, branch `main`, pasta raiz (`.nojekyll` presente). Site atualiza após cada `git push` (1–2 min).
+
+- Site: https://guilhermepiques.github.io/organiza/
+- Repositório: https://github.com/guilhermepiques/organiza
+- Commits usam o e-mail privado do GitHub (`…@users.noreply.github.com`), configurado no git local do projeto.
+- O usuário já usa o app no celular com dados reais: **nunca** mudar nomes de coleções/campos sem migração, nem o nome do banco (`organiza`) ou o caminho do site, senão os dados somem.

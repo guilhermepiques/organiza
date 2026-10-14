@@ -1,5 +1,7 @@
 # Organiza
 
+**Acesse: https://guilhermepiques.github.io/organiza/**
+
 App de **tarefas, calendário e lista de compras** num só lugar. Feito para o celular (funciona bem em tablet e PC), minimalista, com modo claro/escuro, e instalável como app (PWA), inclusive offline.
 
 ## O que ele faz
