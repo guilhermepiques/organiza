@@ -1,7 +1,7 @@
 // Regras de negócio das tarefas (sem DOM).
 
 import * as store from '../../core/store.js';
-import { todayISO, addDays, startOfWeek, toISO, diffDays } from '../../core/date.js';
+import { todayISO, addDays, startOfWeek, toISO } from '../../core/date.js';
 import { nextOccurrence } from '../../core/recurrence.js';
 import { normalize, byOrder } from '../../core/util.js';
 import { PROJECT_COLORS } from '../settings/palettes.js';
@@ -179,14 +179,13 @@ export function groupsFor(view, { sort = 'smart', search = '', priorities = null
       const groups = [{ id: 'atrasadas', title: 'Atrasadas', tone: 'danger', tasks: overdue(open), overdue: true }];
       const future = open.filter((t) => t.date && t.date >= today).sort(sorter);
       const byDate = new Map();
-      // sempre mostra os próximos 7 dias, mesmo vazios, para dar visão da semana
-      for (let i = 0; i < 7; i++) byDate.set(addDays(today, i), []);
+      // só os dias que têm alguma tarefa (pedido do usuário)
       for (const t of future) {
         if (!byDate.has(t.date)) byDate.set(t.date, []);
         byDate.get(t.date).push(t);
       }
       for (const [date, list] of [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-        groups.push({ id: date, date, tasks: list, dateGroup: true, showEmpty: diffDays(today, date) < 7 });
+        groups.push({ id: date, date, tasks: list, dateGroup: true });
       }
       return groups;
     }
@@ -211,13 +210,14 @@ export function groupsFor(view, { sort = 'smart', search = '', priorities = null
     }
     case 'entrada':
     default:
-      // Entrada = todas as tarefas pendentes (com ou sem projeto).
-      // Ordem (pedido do usuário): primeiro as sem data, depois por data (atrasadas, hoje, amanhã…),
-      // a menos que ele escolha outra ordenação (prioridade, nome, recentes).
-      if (sort === 'smart' || sort === 'date') {
-        return [{ id: 'entrada', tasks: open.sort((a, b) => !!a.date - !!b.date || sorter(a, b)) }];
-      }
-      return [{ id: 'entrada', tasks: open.sort(sorter) }];
+      // Entrada = todas as tarefas pendentes (com ou sem projeto), separadas em
+      // Sem data · Atrasadas · Próximos (pedido do usuário). Dentro de cada grupo vale a ordenação escolhida;
+      // em "Próximos" a ordem é sempre por data (hoje, amanhã…).
+      return [
+        { id: 'sem-data', title: 'Sem data', tasks: open.filter((t) => !t.date).sort(sorter) },
+        { id: 'atrasadas', title: 'Atrasadas', tone: 'danger', tasks: overdue(open), overdue: true },
+        { id: 'proximas', title: 'Próximos', tasks: open.filter((t) => t.date && t.date >= today).sort(SORTERS.smart) },
+      ];
   }
 }
 

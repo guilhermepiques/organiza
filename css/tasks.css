@@ -28,8 +28,7 @@
 .meta-date.overdue { color: var(--danger); }
 .meta-label { color: var(--text-3); }
 .meta-project .dot { width: 7px; height: 7px; }
-.empty-day { color: var(--text-3); font-size: 13.5px; padding: 10px 4px; width: 100%; text-align: left; }
-@media (hover: hover) { .task-row:hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); } .empty-day:hover { color: var(--text-2); } }
+@media (hover: hover) { .task-row:hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); } }
 
 /* resumo de produtividade */
 .stats-line { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-2); padding: 6px 12px; border-radius: 999px; background: var(--surface-2); margin: 2px 0 4px; }

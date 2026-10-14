@@ -93,7 +93,8 @@ IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de
 
 ### Feitas (v0.1)
 - **Entrada = todas as tarefas pendentes** (com ou sem projeto), pedido do usuário. Projetos continuam filtrando só as suas tarefas.
-- **Ordem da Entrada** (ordenação Inteligente/Data): primeiro as tarefas **sem data**, depois as com data da mais próxima para a mais distante (atrasadas, hoje, amanhã…). Se o usuário escolher outra ordenação (prioridade, nome, recentes), ela vale.
+- **Entrada separada em grupos**: **Sem data** · **Atrasadas** · **Próximos** (este sempre por data/hora: hoje, amanhã…). Dentro de "Sem data" vale a ordenação escolhida no filtro.
+- **Visão Próximos**: agrupada por dia, mostrando **só os dias que têm tarefas** (sem dias vazios nem "Planejar algo"), pedido do usuário.
 - **Entrada é a visão principal**: o app sempre abre nela (`start_url` sem hash → `tarefas/entrada`). Voltar para a aba Tarefas mantém a visão em que o usuário estava.
 - Offline testado: com o servidor desligado o app abre e salva normalmente. O service worker usa a rede com limite de 3s (internet ruim → usa o cache) e copia o cache antigo ao atualizar de versão.
 - Tarefas: adicionar rápido com linguagem natural (hoje/amanhã/dias da semana/dia 15/15/10/“às 9”/18h/de manhã, `#projeto`, `@etiqueta`, `p1`/`!1`, “toda segunda e quarta”, “todo mês”, “a cada 2 semanas”, “dias úteis”) com prévia; editor completo; subtarefas; recorrência (avança ao concluir); lembretes; visões Entrada/Hoje/Próximos/Concluídas/projeto/etiqueta; busca; ordenar; filtrar por prioridade; reagendar atrasadas; deslizar para concluir/excluir; desfazer; resumo de produtividade (hoje, semana, sequência, gráfico 7 dias); projetos (criar, renomear, cor, excluir).

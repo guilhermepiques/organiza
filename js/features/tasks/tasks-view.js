@@ -12,7 +12,6 @@ import { taskRow } from './task-row.js';
 import { taskNav, viewKey } from './task-nav.js';
 import { createQuickAdd } from './quick-add.js';
 import { statsLine, openStats } from './stats.js';
-import { openEditor } from '../editor/editor.js';
 import { openSettings } from '../settings/settings-view.js';
 
 const EMPTY = {
@@ -155,7 +154,7 @@ export function createTasksView() {
     }
     let total = 0;
     for (const g of groups) {
-      if (!g.tasks.length && !g.showEmpty) continue;
+      if (!g.tasks.length) continue;
       total += g.tasks.length;
       let title = g.title, sub = null;
       if (!title && g.date) ({ title, sub } = dayHeading(g.date));
@@ -177,12 +176,9 @@ export function createTasksView() {
         hideDate: !!g.dateGroup && !g.overdue,
         hideProject: view.key === 'projeto',
       }));
-      if (!g.tasks.length && g.showEmpty) {
-        rows.push(h('button', { type: 'button', class: 'empty-day', onclick: () => openEditor({ type: 'task', defaults: { date: g.date } }) }, '+ Planejar algo'));
-      }
       out.push(h('section', { class: `task-group ${g.dateGroup ? 'date-group' : ''}` }, head, h('div', { class: 'task-list' }, rows)));
     }
-    if (!total && !groups.some((g) => g.showEmpty)) {
+    if (!total) {
       const [ic, t, d] = EMPTY[search ? 'busca' : view.key] || EMPTY.entrada;
       out.push(h('div', { class: 'empty' }, h('div', { class: 'empty-icon' }, icon(ic, 28)), h('h3', null, t), h('p', null, d)));
     }
