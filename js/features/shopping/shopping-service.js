@@ -47,17 +47,23 @@ export function itemsOf(listId) {
   return store.all('items').filter((i) => i.listId === listId);
 }
 
-/** Itens pendentes agrupados por categoria (na ordem do mercado) + comprados no fim. */
+/**
+ * Itens pendentes: primeiro os marcados como prioridade ("acabou em casa"), depois agrupados
+ * por categoria (na ordem do mercado); comprados no fim.
+ */
 export function groupedItems(listId) {
   const items = itemsOf(listId);
-  const pending = items.filter((i) => !i.bought);
+  const byAisle = (a, b) => categoryOrder(a.category) - categoryOrder(b.category) || byOrder(a, b);
+  const pending = items.filter((i) => !i.bought).sort(byAisle);
+  const urgent = pending.filter((i) => i.urgent);
   const bought = items.filter((i) => i.bought).sort((a, b) => (b.boughtAt || 0) - (a.boughtAt || 0));
   const groups = new Map();
-  for (const it of pending.sort((a, b) => categoryOrder(a.category) - categoryOrder(b.category) || byOrder(a, b))) {
+  for (const it of pending) {
+    if (it.urgent) continue;
     if (!groups.has(it.category)) groups.set(it.category, []);
     groups.get(it.category).push(it);
   }
-  return { groups: [...groups.entries()].map(([id, list]) => ({ category: categoryById(id), items: list })), bought, total: items.length };
+  return { urgent, groups: [...groups.entries()].map(([id, list]) => ({ category: categoryById(id), items: list })), bought, total: items.length };
 }
 
 function learn(item) {
@@ -76,7 +82,7 @@ export function categoryFor(name) {
   return store.get('catalog', normalize(name))?.category || guessCategory(name);
 }
 
-export function addItem(listId, { name, qty = null, unit = null, price = null, note = '', category = null }) {
+export function addItem(listId, { name, qty = null, unit = null, price = null, note = '', category = null, urgent = false }) {
   name = capitalize(String(name).trim());
   const existing = itemsOf(listId).find((i) => !i.bought && normalize(i.name) === normalize(name));
   return store.batch('Item adicionado', () => {
@@ -84,7 +90,10 @@ export function addItem(listId, { name, qty = null, unit = null, price = null, n
       // já está na lista: soma a quantidade em vez de duplicar
       const sameUnit = !unit || !existing.unit || unit === existing.unit;
       const nextQty = qty != null && existing.qty != null && sameUnit ? existing.qty + qty : qty ?? existing.qty;
-      const item = store.update('items', existing.id, { qty: nextQty, unit: unit || existing.unit, price: price ?? existing.price, note: note || existing.note });
+      const item = store.update('items', existing.id, {
+        qty: nextQty, unit: unit || existing.unit, price: price ?? existing.price, note: note || existing.note,
+        urgent: urgent || !!existing.urgent,
+      });
       return { item, merged: true };
     }
     const cat = store.get('catalog', normalize(name));
@@ -92,6 +101,7 @@ export function addItem(listId, { name, qty = null, unit = null, price = null, n
       listId, name, qty, unit: unit || (qty != null ? 'un' : null), note,
       price: price ?? cat?.lastPrice ?? null,
       category: category || categoryFor(name),
+      urgent: !!urgent,
       bought: false, boughtAt: null, order: Date.now(),
     });
     learn(item);
@@ -112,8 +122,9 @@ export function updateItem(id, patch) {
 export function toggleItem(id) {
   const it = store.get('items', id);
   if (!it) return;
+  // ao comprar, a prioridade sai (o item não está mais faltando); Desfazer devolve
   store.batch(it.bought ? 'Item desmarcado' : 'Item comprado', () =>
-    store.update('items', id, { bought: !it.bought, boughtAt: it.bought ? null : Date.now() }));
+    store.update('items', id, it.bought ? { bought: false, boughtAt: null } : { bought: true, boughtAt: Date.now(), urgent: false }));
 }
 
 export function deleteItem(id) {
@@ -185,8 +196,16 @@ export function frequent(listId, limit = 12) {
 
 export function shareText(listId) {
   const list = store.get('lists', listId);
-  const { groups } = groupedItems(listId);
+  const { urgent, groups } = groupedItems(listId);
   const lines = [`🛒 *${list?.name || 'Lista de compras'}*`, ''];
+  if (urgent.length) {
+    lines.push('❗ *Prioridade (acabou em casa)*');
+    for (const it of urgent) {
+      const q = qtyLabel(it);
+      lines.push(`• ${it.name}${q ? ' — ' + q : ''}${it.note ? ` (${it.note})` : ''}`);
+    }
+    lines.push('');
+  }
   for (const g of groups) {
     lines.push(`${g.category.emoji} *${g.category.name}*`);
     for (const it of g.items) {

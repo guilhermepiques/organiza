@@ -228,6 +228,11 @@ export function createShoppingView() {
     const cat = h('select', { class: 'input' }, CATEGORIES.map((c) => h('option', { value: c.id, selected: c.id === item.category }, `${c.emoji} ${c.name}`)));
     const price = h('input', { class: 'input', inputmode: 'decimal', value: item.price != null ? String(item.price).replace('.', ',') : '', placeholder: 'R$ por unidade' });
     const note = h('input', { class: 'input', value: item.note || '', placeholder: 'Ex.: sem lactose, marca X' });
+    let urgent = !!item.urgent;
+    const urgentBtn = h('button', {
+      type: 'button', class: 'toggle-chip urgent-chip', 'aria-pressed': String(urgent),
+      onclick: () => { urgent = !urgent; urgentBtn.setAttribute('aria-pressed', String(urgent)); },
+    }, icon('flag', 18), h('span', null, 'Prioridade · acabou em casa'), h('span', { class: 'toggle-tick' }, icon('check', 16)));
     const step = (d) => {
       const n = (parseNumber(qty.value) || 0) + d;
       qty.value = n > 0 ? formatNumber(n) : '';
@@ -238,6 +243,7 @@ export function createShoppingView() {
       size: 'small',
       body: h('div', { class: 'stack' },
         h('label', { class: 'field-v' }, h('span', null, 'Nome'), name),
+        urgentBtn,
         h('div', { class: 'row' },
           h('label', { class: 'field-v grow' }, h('span', null, 'Quantidade'),
             h('div', { class: 'stepper' },
@@ -264,7 +270,7 @@ export function createShoppingView() {
           if (!n) return name.focus();
           store.batch('Item alterado', () => updateItem(item.id, {
             name: n, qty: parseNumber(qty.value), unit: unit.value || (parseNumber(qty.value) != null ? 'un' : null),
-            category: cat.value, price: parseNumber(price.value), note: note.value.trim(),
+            category: cat.value, price: parseNumber(price.value), note: note.value.trim(), urgent,
           }));
           await s.close();
         } }, 'Salvar'),
@@ -272,16 +278,17 @@ export function createShoppingView() {
     });
   }
 
-  function itemRow(it) {
+  function itemRow(it, { showCategory = false } = {}) {
     const total = lineTotal(it);
-    const content = h('div', { class: `shop-row ${it.bought ? 'bought' : ''}`, dataset: { id: it.id }, onclick: () => openItem(it) },
+    const cat = showCategory ? categoryById(it.category) : null;
+    const content = h('div', { class: `shop-row ${it.bought ? 'bought' : ''} ${it.urgent && !it.bought ? 'urgent' : ''}`, dataset: { id: it.id }, onclick: () => openItem(it) },
       h('button', {
         type: 'button', class: `box ${it.bought ? 'is-done' : ''}`, 'aria-label': it.bought ? 'Desmarcar' : 'Marcar como comprado',
         onclick: (e) => { e.stopPropagation(); vibrate(8); e.currentTarget.classList.add('pop'); setTimeout(() => toggleItem(it.id), 160); },
       }, icon('check', 14)),
       h('div', { class: 'shop-main' },
         h('div', { class: 'shop-name' }, it.name, qtyLabel(it) ? h('span', { class: 'qty' }, qtyLabel(it)) : null),
-        it.note ? h('div', { class: 'shop-note' }, it.note) : null),
+        cat || it.note ? h('div', { class: 'shop-note' }, cat ? `${cat.emoji} ${cat.name}` : null, cat && it.note ? ' · ' : null, it.note || null) : null),
       total != null ? h('span', { class: 'shop-price' }, formatMoney(total)) : null);
     return swipeable(content, {
       right: { icon: it.bought ? 'undo' : 'check', className: 'bg-success', onSwipe: () => toggleItem(it.id) },
@@ -304,8 +311,13 @@ export function createShoppingView() {
   }
 
   function renderContent() {
-    const { groups, bought, total } = groupedItems(listId);
+    const { urgent, groups, bought, total } = groupedItems(listId);
     const out = [];
+    if (urgent.length) {
+      out.push(h('section', { class: 'shop-group urgent-group' },
+        h('div', { class: 'group-head tone-danger' }, icon('flag', 15), h('span', { class: 'group-title' }, 'Prioridade · acabou em casa'), h('span', { class: 'group-count' }, String(urgent.length))),
+        h('div', { class: 'shop-list' }, urgent.map((it) => itemRow(it, { showCategory: true })))));
+    }
     for (const g of groups) {
       out.push(h('section', { class: 'shop-group' },
         h('div', { class: 'group-head' }, h('span', { class: 'group-title' }, `${g.category.emoji}  ${g.category.name}`), h('span', { class: 'group-count' }, String(g.items.length))),
@@ -327,7 +339,7 @@ export function createShoppingView() {
         h('h3', null, 'Lista vazia'),
         h('p', null, 'Digite abaixo ou toque nas sugestões. Dica: "2 kg arroz, leite, pão".'),
         h('div', { class: 'chips center' }, frequent(listId, 8).map((n) => h('button', { type: 'button', class: 'chip', onclick: () => quickAdd({ name: n }) }, '+ ' + n)))));
-    } else if (!groups.length) {
+    } else if (!groups.length && !urgent.length) {
       out.unshift(h('div', { class: 'all-done' }, icon('checkCircle', 18), 'Tudo no carrinho!'));
     }
     render(content, out);

@@ -31,6 +31,10 @@
 .qty { font-size: 12.5px; font-weight: 600; color: var(--text-2); background: var(--surface-2); padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
 .shop-note { font-size: 12.5px; color: var(--text-3); margin-top: 1px; }
 .shop-price { font-size: 13.5px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.shop-row.urgent { box-shadow: inset 3px 0 0 var(--danger); padding-left: 10px; }
+.urgent-group .group-head { color: var(--danger); }
+.urgent-group .group-head .i { color: var(--danger); }
+.urgent-chip[aria-pressed="true"] { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); border-color: var(--danger); color: var(--danger); }
 .shop-row.flash { animation: flash 1.6s var(--ease); }
 @keyframes flash { 0%, 60% { background: var(--accent-soft); } 100% { background: transparent; } }
 .shop-row.bought .shop-name { text-decoration: line-through; color: var(--text-3); }
