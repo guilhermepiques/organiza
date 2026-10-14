@@ -16,6 +16,7 @@
     { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
   ],
   "shortcuts": [
+    { "name": "Entrada", "url": "./#/tarefas/entrada" },
     { "name": "Hoje", "url": "./#/tarefas/hoje" },
     { "name": "Calendário", "url": "./#/calendario" },
     { "name": "Compras", "url": "./#/compras" }

@@ -65,7 +65,7 @@ async function main() {
   });
 
   const r = currentRoute();
-  navigate(location.hash ? [r.tab, ...r.parts].join('/') : 'tarefas/hoje');
+  navigate(location.hash ? [r.tab, ...r.parts].join('/') : 'tarefas/entrada');
 
   // ao voltar para o app num novo dia, atualiza "Hoje"
   let lastDay = new Date().toDateString();

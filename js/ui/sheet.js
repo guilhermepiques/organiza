@@ -64,7 +64,7 @@ export function openSheet({ title, body, footer, headerActions, className = '', 
             ignorePops++;
             popWaiters.push(resolve);
             history.back();
-            setTimeout(resolve, 400); // segurança caso o popstate não venha
+            setTimeout(resolve, 1500); // só segurança caso o popstate não venha (curto demais atrapalha a navegação em celular lento)
           });
       // onClose só roda depois que o histórico assentou, para que o próximo painel/navegação não se atrapalhe
       return done.then(() => onClose?.());

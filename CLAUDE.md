@@ -93,6 +93,7 @@ IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de
 
 ### Feitas (v0.1)
 - **Entrada = todas as tarefas pendentes** (com ou sem projeto), pedido do usuário. Projetos continuam filtrando só as suas tarefas.
+- **Entrada é a visão principal**: o app sempre abre nela (`start_url` sem hash → `tarefas/entrada`). Voltar para a aba Tarefas mantém a visão em que o usuário estava.
 - Offline testado: com o servidor desligado o app abre e salva normalmente. O service worker usa a rede com limite de 3s (internet ruim → usa o cache) e copia o cache antigo ao atualizar de versão.
 - Tarefas: adicionar rápido com linguagem natural (hoje/amanhã/dias da semana/dia 15/15/10/“às 9”/18h/de manhã, `#projeto`, `@etiqueta`, `p1`/`!1`, “toda segunda e quarta”, “todo mês”, “a cada 2 semanas”, “dias úteis”) com prévia; editor completo; subtarefas; recorrência (avança ao concluir); lembretes; visões Entrada/Hoje/Próximos/Concluídas/projeto/etiqueta; busca; ordenar; filtrar por prioridade; reagendar atrasadas; deslizar para concluir/excluir; desfazer; resumo de produtividade (hoje, semana, sequência, gráfico 7 dias); projetos (criar, renomear, cor, excluir).
 - Calendário: Dia/Semana/Mês, navegação (botões e deslizar), linha do “agora”, criar evento tocando no horário, eventos com cor/duração/repetição/dia todo, tarefas marcadas com "Adicionar ao calendário" aparecem como blocos, concluir pelo calendário, exportar `.ics`.

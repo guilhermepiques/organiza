@@ -25,7 +25,7 @@ const EMPTY = {
 };
 
 export function createTasksView() {
-  let view = { key: 'hoje' };
+  let view = { key: 'entrada' }; // visão principal ao abrir o app
   let search = '';
   const priorities = new Set();
   const expanded = new Set();
@@ -200,11 +200,14 @@ export function createTasksView() {
   function activate(parts = []) {
     const [key, ...rest] = parts;
     const id = rest.join('/');
-    if (VIEWS[key]) view = { key };
+    const before = viewKey(view);
+    if (!key) {
+      // voltou para a aba Tarefas (sem visão no endereço): continua na visão em que estava
+    } else if (VIEWS[key]) view = { key };
     else if (key === 'projeto' && store.get('projects', id)) view = { key, id };
     else if (key === 'etiqueta' && id) view = { key, id };
-    else view = { key: 'hoje' };
-    body.scrollTop = 0;
+    else view = { key: 'entrada' };
+    if (viewKey(view) !== before) body.scrollTop = 0;
     refresh();
   }
 
