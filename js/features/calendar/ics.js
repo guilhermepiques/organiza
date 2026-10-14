@@ -25,7 +25,7 @@ function stamp() {
 function vevent({ uid, title, notes, date, time, duration, recurrence }) {
   const lines = ['BEGIN:VEVENT', `UID:${uid}@organiza`, `DTSTAMP:${stamp()}`];
   if (time) {
-    const endMin = timeToMin(time) + (duration || 60);
+    const endMin = timeToMin(time) + (duration ?? 60);
     const endDate = endMin >= 1440 ? addDays(date, Math.floor(endMin / 1440)) : date;
     lines.push(`DTSTART:${dt(date, time)}`, `DTEND:${dt(endDate, minToTime(endMin % 1440))}`);
   } else {
@@ -51,7 +51,7 @@ export function buildICS({ events = true, tasks = true } = {}) {
   if (tasks) {
     for (const t of store.all('tasks')) {
       if (!t.block || !t.date || t.done) continue;
-      lines.push(...vevent({ uid: t.id, title: '☐ ' + t.title, notes: t.notes, date: t.date, time: t.time, duration: t.duration || 60, recurrence: t.recurrence }));
+      lines.push(...vevent({ uid: t.id, title: '☐ ' + t.title, notes: t.notes, date: t.date, time: t.time, duration: t.duration ?? 60, recurrence: t.recurrence }));
       count++;
     }
   }

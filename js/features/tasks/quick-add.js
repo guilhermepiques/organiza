@@ -83,7 +83,7 @@ export function createQuickAdd({ getDefaults }) {
         actionLabel: 'Adicionar ao calendário',
         duration: 6000,
         onAction: () => {
-          store.batch('Adicionada ao calendário', () => store.update('tasks', task.id, { block: true, duration: task.duration || 60 }));
+          store.batch('Adicionada ao calendário', () => store.update('tasks', task.id, { block: true, duration: task.duration ?? 60 }));
           toast('Adicionada ao calendário');
         },
       });

@@ -58,6 +58,17 @@
 .cal-item-title { font-weight: 600; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
 .cal-item.short .cal-item-title { -webkit-line-clamp: 1; }
 .cal-item-time { font-size: 10.5px; color: var(--text-2); margin-top: 1px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+/* "Sem duração": marcação fina no horário */
+.cal-item.cal-point {
+  height: 22px; padding: 0 6px; display: flex; align-items: center; gap: 4px; z-index: 2;
+  background: var(--surface); border-left: 3px solid var(--c);
+  box-shadow: inset 0 0 0 1px var(--border), var(--shadow-sm);
+}
+.cal-point .cal-item-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cal-point-time { font-size: 10.5px; font-weight: 700; color: var(--c); flex: none; font-variant-numeric: tabular-nums; }
+.single .cal-item.cal-point { height: 26px; padding: 0 10px; gap: 8px; }
+.single .cal-point-time { font-size: 12px; }
+
 .now-line { position: absolute; left: -1px; right: 0; height: 2px; background: var(--danger); z-index: 3; pointer-events: none; }
 .now-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
 @media (hover: hover) { .cal-item:hover { filter: brightness(.97); } }
@@ -69,6 +80,8 @@
   .cal-timegrid:not(.single) .cal-item { padding: 2px 3px; font-size: 10.5px; border-left-width: 2px; }
   .cal-timegrid:not(.single) .cal-item-time { display: none; }
   .cal-timegrid:not(.single) .cal-item .check { display: none; }
+  .cal-timegrid:not(.single) .cal-point-time { display: none; }
+  .cal-timegrid:not(.single) .cal-item.cal-point { padding: 0 3px; }
   .cal-timegrid:not(.single) .cal-item-title { -webkit-line-clamp: 6; }
   .cal-timegrid:not(.single) .cal-chip { font-size: 10px; padding: 2px 3px; }
   .cal-timegrid:not(.single) .cal-chip .check { display: none; }

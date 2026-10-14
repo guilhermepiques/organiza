@@ -151,6 +151,7 @@ export function createCalendarView() {
 
   function timedItem(it, showTime) {
     const top = (it.start / 60) * HOUR_H;
+    if (it.point) return pointItem(it, top);
     const height = Math.max(18, ((it.end - it.start) / 60) * HOUR_H - 2);
     const short = height < 34;
     return h('div', {
@@ -164,6 +165,22 @@ export function createCalendarView() {
     },
     h('div', { class: 'cal-item-row' }, checkFor(it), h('span', { class: 'cal-item-title' }, it.title)),
     showTime && !short ? h('div', { class: 'cal-item-time' }, `${minToTime(it.start)} – ${minToTime(it.end)}`, it.recurring ? icon('repeat', 11) : null) : null);
+  }
+
+  // "Sem duração": marcação fina só no horário (ex.: entrega de trabalho)
+  function pointItem(it, top) {
+    return h('div', {
+      class: `cal-item cal-point kind-${it.kind} ${it.done ? 'done' : ''}`,
+      style: {
+        '--c': colorOf(it), top: `${top}px`,
+        left: `calc(${(it._col / it._cols) * 100}% + 1px)`, width: `calc(${100 / it._cols}% - 3px)`,
+      },
+      role: 'button', tabindex: '0', title: `${minToTime(it.start)} ${it.title}`,
+      onclick: (e) => { e.stopPropagation(); openItem(it); },
+    },
+    checkFor(it),
+    h('span', { class: 'cal-point-time' }, minToTime(it.start)),
+    h('span', { class: 'cal-item-title' }, it.title));
   }
 
   // ---------- visões ----------
@@ -181,7 +198,7 @@ export function createCalendarView() {
       }, h('span', { class: 'wd' }, WEEKDAYS_SHORT[weekday(d)]), h('span', { class: 'dn' }, String(fromISO(d).getDate())))));
 
     const hasAllDay = days.some((d) => occ.get(d).allDay.length);
-    const allDay = h('div', { class: `cal-allday ${hasAllDay ? '' : 'empty'}`, style: { gridTemplateColumns: cols } },
+    const allDay = h('div', { class: `cal-allday ${hasAllDay ? '' : 'no-items'}`, style: { gridTemplateColumns: cols } },
       h('div', { class: 'cal-allday-label' }, 'dia'),
       days.map((d) => h('div', {
         class: 'cal-allday-cell',

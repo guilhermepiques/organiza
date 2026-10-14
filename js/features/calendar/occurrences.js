@@ -26,7 +26,8 @@ export function occurrencesForRange(from, to) {
       const start = e.allDay || !e.time ? null : timeToMin(e.time);
       put({
         kind: 'event', id: e.id, title: e.title, date, start,
-        end: start == null ? null : Math.min(24 * 60, start + (e.duration || 60)),
+        end: start == null ? null : Math.min(24 * 60, start + (e.duration ?? 60)),
+        point: e.duration === 0,
         color: e.color, recurring: !!e.recurrence, notes: e.notes,
       });
     }
@@ -37,10 +38,11 @@ export function occurrencesForRange(from, to) {
     if (!t.block || !t.date || t.date < from || t.date > to) continue;
     if (t.done && !settings.showDoneInCalendar) continue;
     const start = t.time ? timeToMin(t.time) : null;
-    const dur = t.duration || 60;
+    const dur = t.duration ?? 60;
     put({
       kind: 'task', id: t.id, title: t.title, date: t.date, start,
       end: start == null ? null : Math.min(24 * 60, start + dur),
+      point: dur === 0,
       color: t.color, done: t.done, priority: t.priority, block: true, recurring: !!t.recurrence,
     });
   }
@@ -65,7 +67,7 @@ export function layoutColumns(items) {
         c = cols.length;
         cols.push(0);
       }
-      cols[c] = Math.max(it.end, it.start + 20);
+      cols[c] = Math.max(it.end, it.start + 25);
       it._col = c;
     }
     for (const it of cluster) {
@@ -76,7 +78,7 @@ export function layoutColumns(items) {
     clusterEnd = -1;
   };
   for (const it of items) {
-    const end = Math.max(it.end, it.start + 20);
+    const end = Math.max(it.end, it.start + 25); // itens curtos / sem duração ocupam ~25 min na tela
     if (cluster.length && it.start >= clusterEnd) flush();
     cluster.push(it);
     clusterEnd = Math.max(clusterEnd, end);

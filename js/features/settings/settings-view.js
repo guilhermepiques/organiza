@@ -51,7 +51,7 @@ export function openSettings() {
   const weekSwitch = segmented([{ value: 0, label: 'Domingo' }, { value: 1, label: 'Segunda' }], s.weekStart,
     (v) => store.setSettings({ weekStart: Number(v) }));
   const durSelect = h('select', { class: 'input input-compact', onchange: () => store.setSettings({ defaultEventDuration: Number(durSelect.value) }) },
-    [15, 30, 45, 60, 90, 120].map((d) => h('option', { value: String(d), selected: d === s.defaultEventDuration }, durationLabel(d))));
+    [0, 15, 30, 45, 60, 90, 120].map((d) => h('option', { value: String(d), selected: d === s.defaultEventDuration }, durationLabel(d))));
 
   // ----- lembretes -----
   const notifState = h('div', { class: 'settings-control' });

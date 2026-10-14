@@ -21,7 +21,7 @@ const KINDS = [
   { value: 'event', label: 'Evento' },
 ];
 
-const DURATIONS = [15, 30, 45, 60, 90, 120, 180, 240, 480];
+const DURATIONS = [0, 15, 30, 45, 60, 90, 120, 180, 240, 480]; // 0 = sem duração (só o horário, ex.: entrega)
 const REMINDERS = [
   { value: '', label: 'Sem lembrete' },
   { value: '0', label: 'Na hora' },
@@ -59,13 +59,13 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   const isNew = !original;
 
   const v = {
-    title: '', notes: '', date: null, time: null, duration: settings.defaultEventDuration || 60, allDay: false,
+    title: '', notes: '', date: null, time: null, duration: settings.defaultEventDuration ?? 60, allDay: false,
     priority: 4, projectId: null, labels: [], subtasks: [], recurrence: null, reminder: null, color: null, block: false,
     ...(original || {}),
     ...defaults,
   };
   if (original && sourceCol === 'events') v.time = original.allDay ? null : original.time;
-  if (!v.duration) v.duration = settings.defaultEventDuration || 60;
+  if (v.duration == null) v.duration = settings.defaultEventDuration ?? 60;
 
   let kind = original ? (sourceCol === 'events' ? 'event' : 'task') : type === 'event' ? 'event' : 'task';
   let inCal = !!v.block || type === 'both';
@@ -371,7 +371,7 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     if (!date && (kind === 'event' || time || wantsRepeat || reminder != null)) date = todayISO();
     if (!date) { time = null; reminder = null; }
     const recurrence = date && wantsRepeat ? readRecurrence(date) : null;
-    const duration = Number(durationSelect.value) || 60;
+    const duration = Number(durationSelect.value); // 0 = sem duração
     let addToCal = kind === 'task' && inCal && !!date;
 
     // Tarefa com data, mas fora do calendário: confirma antes de salvar
@@ -441,6 +441,6 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
  *  Se o usuário trocar para "Tarefa", ela já vem com "Adicionar ao calendário" ligado. */
 export function openNewEvent(date, time) {
   const settings = store.getSettings();
-  const dur = settings.defaultEventDuration || 60;
+  const dur = settings.defaultEventDuration ?? 60;
   return openEditor({ type: 'event', defaults: { date, time, duration: dur, block: true } });
 }

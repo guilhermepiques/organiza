@@ -108,6 +108,7 @@ export function shortLabel(iso) {
 
 /** "1h30", "45 min", "2h" */
 export function durationLabel(min) {
+  if (min === 0) return 'Sem duração';
   if (!min) return '';
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
