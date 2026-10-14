@@ -1,0 +1,66 @@
+/* Tokens de design: cores neutras, tipografia, raios e movimento.
+   A cor de destaque (--accent*) vem da paleta escolhida em Ajustes (js/features/settings/palettes.js). */
+
+:root {
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --tabbar-h: 62px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --gutter: 16px;
+  --content-max: 760px;
+
+  --accent: #27272a;
+  --accent-contrast: #ffffff;
+  --accent-soft: #ededee;
+}
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #e9e9ec;
+  --border: #e8e8eb;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-2: #55555e;
+  --text-3: #a1a1aa;
+  --danger: #dc2626;
+  --success: #15803d;
+  --warning: #d97706;
+  --p1-c: #dc2626;
+  --p2-c: #e57a00;
+  --p3-c: #2563eb;
+  --p4-c: #b4b4bb;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / .05);
+  --shadow: 0 1px 2px rgb(0 0 0 / .04), 0 10px 30px rgb(0 0 0 / .10);
+  --backdrop: rgb(9 9 11 / .35);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e0e10;
+  --surface: #17171a;
+  --surface-2: #1f1f23;
+  --surface-3: #2a2a2f;
+  --border: #26262b;
+  --border-strong: #3f3f46;
+  --text: #f4f4f5;
+  --text-2: #a8a8b2;
+  --text-3: #66666f;
+  --danger: #f87171;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --p1-c: #f87171;
+  --p2-c: #fb923c;
+  --p3-c: #60a5fa;
+  --p4-c: #5c5c66;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / .4);
+  --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 14px 36px rgb(0 0 0 / .55);
+  --backdrop: rgb(0 0 0 / .6);
+}
