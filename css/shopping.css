@@ -1,0 +1,52 @@
+/* Aba Compras. */
+
+.list-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 0 var(--gutter) 10px; flex: none; }
+.list-tabs::-webkit-scrollbar { display: none; }
+.list-tab {
+  height: 36px; padding: 0 14px; border-radius: 999px; flex: none;
+  background: var(--surface-2); color: var(--text-2);
+  font-size: 14px; font-weight: 600; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background .15s, color .15s;
+}
+.list-tab.active { background: var(--accent); color: var(--accent-contrast); }
+.tab-count { font-size: 12px; opacity: .65; }
+.list-tab.add { width: 36px; padding: 0; justify-content: center; }
+
+.shop-group { margin-top: 14px; }
+.shop-group:first-child { margin-top: 2px; }
+.shop-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; min-height: 54px; border-bottom: 1px solid var(--border); cursor: pointer; animation: rise .2s var(--ease); }
+.shop-list > .swipe:last-child .shop-row { border-bottom: 0; }
+.box {
+  width: 24px; height: 24px; border-radius: 7px; flex: none; position: relative;
+  border: 2px solid var(--border-strong); color: transparent;
+  display: grid; place-items: center;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.box::before { content: ''; position: absolute; inset: -12px; }
+.box.is-done { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.box.pop { animation: pop .3s var(--ease); }
+.shop-main { flex: 1; min-width: 0; }
+.shop-name { font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; overflow-wrap: anywhere; }
+.qty { font-size: 12.5px; font-weight: 600; color: var(--text-2); background: var(--surface-2); padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.shop-note { font-size: 12.5px; color: var(--text-3); margin-top: 1px; }
+.shop-price { font-size: 13.5px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.shop-row.bought .shop-name { text-decoration: line-through; color: var(--text-3); }
+.shop-row.bought .qty, .shop-row.bought .shop-price { opacity: .6; }
+.bought-group { margin-top: 24px; }
+.all-done { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; color: var(--success); font-weight: 600; }
+@media (hover: hover) { .shop-row:hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); } }
+
+.shop-total { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px var(--gutter) 0; font-size: 14px; color: var(--text-2); flex: none; border-top: 1px solid var(--border); }
+.shop-total strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.shop-suggest { padding: 0 0 8px; display: flex; flex-direction: column; gap: 2px; animation: rise .15s var(--ease); }
+.shop-suggest:empty { display: none; }
+.suggest-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); padding: 0 2px 4px; }
+.suggest-item { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; padding: 0 12px; border-radius: 10px; text-align: left; font-size: 15px; background: var(--surface); border: 1px solid var(--border); }
+@media (hover: hover) { .suggest-item:hover { background: var(--surface-2); } }
+
+.share-preview { white-space: pre-wrap; font: 13.5px/1.5 var(--font); background: var(--surface-2); padding: 12px 14px; border-radius: 12px; max-height: 40vh; overflow: auto; margin: 0; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper .input { flex: 1; width: auto; min-width: 60px; text-align: center; }
+.stepper .icon-btn { font-size: 22px; background: var(--surface-2); width: 46px; height: 46px; border-radius: 12px; }
