@@ -88,9 +88,14 @@ js/features/
 - `log`: conclusões de tarefas (estatísticas e sequência)
 - `meta/settings`: theme, palette, weekStart, calendarView, defaultEventDuration, taskSort, showDoneInCalendar, lastListId, holidays {br, jundiai, limeira, facultativos}
 
-### Sincronização futura (preparado)
+### Login e sincronização (Firebase)
 
-IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de persistência (`db.js` + `store.js`). Para sincronizar: criar um adaptador remoto (ex.: Supabase/Firebase) que envie/receba registros por `updatedAt`, sem mexer nas telas.
+- **Firebase Auth (e-mail e senha) + Firestore**, escolhido porque o plano grátis não pausa (Supabase pausa após 7 dias parado) e funciona no GitHub Pages. Login por e-mail/senha funciona no app instalado no iPhone (login Google com popup costuma falhar ali).
+- `js/sync/firebase-config.js`: configuração do projeto. **Não é segredo** (o Firebase foi feito para ela ficar no site); a proteção são as regras do Firestore em `docs/firebase-regras.txt`. Com `null`, o app funciona só no aparelho.
+- `js/sync/sync.js`: SDK carregado de `www.gstatic.com/firebasejs/10.12.2` só se houver configuração (o service worker guarda no cache). Dados em `users/{uid}/records/{coleção__id}` com `json`, `updatedAt`, `deleted` e `serverAt` (hora do servidor). Envio: fila de gravações locais (`store.onLocalWrite`) + reenvio de tudo com `updatedAt` maior que o último envio confirmado. Recebimento: escuta `serverAt > último recebido`. Conflito: vence o `updatedAt` mais recente (`store.applyRemote` aqui; as regras recusam sobrescrever versão mais nova na nuvem).
+- Ajustes (`meta/settings`) **não** sincronizam: cada aparelho tem o próprio tema/visão.
+- Primeiro login num aparelho com dados: pergunta "Juntar com a conta" ou "Usar só os da conta".
+- `js/sync/account-view.js`: seção "Conta e sincronização" em Ajustes (entrar, criar conta, esqueci a senha, status, sincronizar agora, sair).
 
 ## Funcionalidades
 
@@ -113,7 +118,7 @@ IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de
 - Editar só uma ocorrência de um evento repetido (hoje edita a série).
 - Mostrar ocorrências futuras de tarefas recorrentes no calendário.
 - Lembretes com app fechado (exigiria servidor de push).
-- Sincronização entre dispositivos.
+- Ativar o login: falta o usuário criar o projeto Firebase e preencher `js/sync/firebase-config.js`.
 - Fonte personalizada, mais paletas, ícone do app conforme a paleta.
 
 ## Publicação

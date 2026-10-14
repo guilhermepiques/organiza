@@ -12,6 +12,7 @@ import { openSettings } from './features/settings/settings-view.js';
 import { openSearch } from './features/search/search.js';
 import { startReminders } from './features/reminders/reminders.js';
 import { registerServiceWorker } from './pwa.js';
+import { initSync } from './sync/sync.js';
 
 const TABS = [
   { id: 'tarefas', label: 'Tarefas', icon: 'tasks', create: createTasksView },
@@ -89,6 +90,7 @@ async function main() {
 
   startReminders();
   registerServiceWorker();
+  initSync(); // login e sincronização (só se o Firebase estiver configurado)
 }
 
 main().catch((e) => {

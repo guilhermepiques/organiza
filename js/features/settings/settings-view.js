@@ -12,6 +12,8 @@ import { HOLIDAY_REGIONS, DEFAULT_HOLIDAY_SETTINGS } from '../calendar/holidays.
 import { exportBackup, readBackupFile, importBackup, loadSampleData } from './backup.js';
 import { notificationStatus, ensureNotificationPermission } from '../reminders/reminders.js';
 import { installState, promptInstall } from '../../pwa.js';
+import { accountSection } from '../../sync/account-view.js';
+import { getSyncState } from '../../sync/sync.js';
 
 export const APP_VERSION = '0.1.0';
 
@@ -109,6 +111,7 @@ export function openSettings() {
   renderInstall();
 
   const body = h('div', { class: 'settings' },
+    section('Conta e sincronização', accountSection()),
     section('Aparência',
       row('Tema', themeSwitch),
       h('div', { class: 'settings-label' }, 'Cor de destaque', h('small', null, 'Toque para testar: muda na hora.')),
@@ -133,7 +136,7 @@ export function openSettings() {
           toast('Dados de exemplo adicionados', { actionLabel: 'Desfazer', onAction: () => store.undo() });
         } }, icon('wand', 18), 'Adicionar dados de exemplo'),
         h('button', { type: 'button', class: 'btn btn-block btn-ghost danger', onclick: async () => {
-          const ok = await confirmDialog({ title: 'Apagar tudo?', message: 'Todas as tarefas, eventos e listas deste aparelho serão apagados. Faça um backup antes, se quiser.', okLabel: 'Apagar tudo', danger: true });
+          const ok = await confirmDialog({ title: 'Apagar tudo?', message: getSyncState().user ? 'Apaga só deste aparelho. Como você está conectado, os dados da sua conta voltam na próxima sincronização. Para apagar de vez, saia da conta antes.' : 'Todas as tarefas, eventos e listas deste aparelho serão apagados. Faça um backup antes, se quiser.', okLabel: 'Apagar tudo', danger: true });
           if (!ok) return;
           await store.wipe();
           applyTheme(store.getSettings());

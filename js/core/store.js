@@ -73,11 +73,38 @@ function track(col, id) {
   recording.set(key, { col, id, prev: prev ? structuredClone(prev) : null });
 }
 
-function write(col, rec) {
+// Ganchos para a sincronização (js/sync): avisam a cada gravação local e quando os dados são trocados por inteiro.
+const writeHooks = new Set();
+const resetHooks = new Set();
+export const onLocalWrite = (fn) => (writeHooks.add(fn), () => writeHooks.delete(fn));
+export const onReset = (fn) => (resetHooks.add(fn), () => resetHooks.delete(fn));
+
+function write(col, rec, { remote = false } = {}) {
   data[col].set(rec.id, rec);
   dirty.set(`${col}:${rec.id}`, { col, rec });
   scheduleFlush();
   changed(col);
+  if (!remote) for (const fn of writeHooks) fn(col, rec);
+}
+
+/**
+ * Aplica um registro vindo de outro aparelho. Vence o mais recente (updatedAt).
+ * Não dispara os ganchos de gravação local (evita mandar de volta para a nuvem).
+ */
+export function applyRemote(col, rec) {
+  if (!data[col] || !rec?.id) return false;
+  const cur = data[col].get(rec.id);
+  if (cur && (cur.updatedAt || 0) >= (rec.updatedAt || 0)) return false;
+  write(col, rec, { remote: true });
+  return true;
+}
+
+/** Um registro mesmo que excluído (para enviar à nuvem). */
+export const getRaw = (col, id) => data[col]?.get(id) || null;
+
+/** Todos os registros, inclusive os excluídos (para enviar à nuvem). */
+export function allRaw(col) {
+  return [...data[col].values()];
 }
 
 export function create(col, fields = {}) {
@@ -215,6 +242,7 @@ export async function replaceAll(dump) {
   await db.putMany('meta', [settings]);
   undoStack.length = 0;
   for (const col of [...COLLECTIONS, 'settings']) changed(col);
+  for (const fn of resetHooks) fn();
 }
 
 export async function wipe() {

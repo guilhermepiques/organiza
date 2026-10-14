@@ -137,6 +137,20 @@
 .editor-sheet .sheet-footer .btn-primary { min-width: 96px; }
 @media (max-width: 420px) { .field-label { width: 84px; gap: 6px; font-size: 13.5px; } .field { gap: 8px; } }
 
+/* ---------- conta e sincronização ---------- */
+.account-user { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text); }
+.account-user .i { color: var(--success); }
+.account-msg { font-size: 13.5px; color: var(--danger); }
+.account-msg.ok { color: var(--success); }
+.sync-status { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-2); }
+.sync-status .dot { width: 8px; height: 8px; background: var(--text-3); }
+.sync-status.ok .dot { background: var(--success); }
+.sync-status.busy .dot { background: var(--warning); animation: pop 1s infinite; }
+.sync-status.warn .dot { background: var(--warning); }
+.sync-status.error { color: var(--danger); }
+.sync-status.error .dot { background: var(--danger); }
+.account .link-btn { align-self: flex-start; }
+
 /* ---------- ajustes ---------- */
 .settings { display: flex; flex-direction: column; gap: 26px; }
 .settings-section { display: flex; flex-direction: column; gap: 12px; }

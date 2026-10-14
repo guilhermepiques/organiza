@@ -1,0 +1,20 @@
+// Regras de segurança do Firestore para o Organiza.
+// Cole no Console do Firebase → Firestore Database → Regras → Publicar.
+//
+// - Cada pessoa só lê e grava os próprios dados (users/<seu id>/...).
+// - Uma gravação só substitui um registro se for igual ou mais nova (updatedAt),
+//   para um aparelho que ficou offline não apagar uma alteração mais recente feita em outro.
+// - Nada é apagado de verdade pelo app (exclusão é marcada com deleted: true).
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/records/{recordId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.updatedAt >= resource.data.updatedAt;
+      allow delete: if false;
+    }
+  }
+}

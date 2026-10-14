@@ -2,7 +2,7 @@
 // Estratégia "rede primeiro": online você sempre vê a versão mais nova; offline usa o cache.
 // Ao mudar a estrutura de arquivos, aumente VERSION para limpar caches antigos.
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = `organiza-${VERSION}`;
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './js/app.js'];
 
@@ -39,6 +39,17 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // SDK do Firebase (versão fixa no endereço, nunca muda): guarda no cache para abrir offline
+  if (url.origin === 'https://www.gstatic.com' && url.pathname.startsWith('/firebasejs/')) {
+    event.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        event.waitUntil(caches.open(CACHE).then((c) => c.put(req, copy)));
+      }
+      return res;
+    })));
+    return;
+  }
   if (url.origin !== self.location.origin) return;
   event.respondWith(respond(event, req));
 });
