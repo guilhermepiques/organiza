@@ -11,7 +11,7 @@ import { openSheet, promptText, choiceDialog } from '../../ui/sheet.js';
 import { undoToast, toast } from '../../ui/toast.js';
 import * as store from '../../core/store.js';
 import { uid } from '../../core/util.js';
-import { todayISO, addDays, weekday, fromISO, relativeLabel, WEEKDAYS, WEEKDAYS_LETTER, durationLabel } from '../../core/date.js';
+import { todayISO, addDays, weekday, fromISO, relativeLabel, WEEKDAYS, WEEKDAYS_LETTER, durationLabel, timeToMin, minToTime } from '../../core/date.js';
 import { PRIORITIES, projects, createProject, labelsInUse, newTaskFields, toggleTask } from '../tasks/task-service.js';
 import { EVENT_COLORS } from '../settings/palettes.js';
 import { ensureNotificationPermission } from '../reminders/reminders.js';
@@ -21,7 +21,6 @@ const KINDS = [
   { value: 'event', label: 'Evento' },
 ];
 
-const DURATIONS = [0, 15, 30, 45, 60, 90, 120, 180, 240, 480]; // 0 = sem duração (só o horário, ex.: entrega)
 const REMINDERS = [
   { value: '', label: 'Sem lembrete' },
   { value: '0', label: 'Na hora' },
@@ -85,9 +84,49 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   const notesInput = autoGrow(h('textarea', { class: 'editor-notes', rows: '1', placeholder: 'Notas', value: v.notes || '' }));
 
   const dateInput = h('input', { type: 'date', class: 'input input-compact', value: v.date || '', onchange: () => { refreshRepeatLabels(); syncQuick(); } });
-  const timeInput = h('input', { type: 'time', class: 'input input-compact', value: v.time || '', step: '300', onchange: () => { if (timeInput.value) allDayInput.checked = false; syncAllDay(); } });
-  const clearTime = h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Remover hora', onclick: () => { timeInput.value = ''; } }, icon('x', 16));
+  const timeInput = h('input', { type: 'time', class: 'input input-compact', value: v.time || '', step: '300', onchange: onStartChange });
+  const clearTime = h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Remover hora', onclick: () => { timeInput.value = ''; endInput.value = ''; syncEndNote(); } }, icon('x', 16));
   const allDayInput = h('input', { type: 'checkbox', checked: !!v.allDay, onchange: syncAllDay });
+
+  // Horário de fim (eventos e tarefas no calendário). Guardamos a duração em minutos;
+  // fim vazio = "sem duração" (ex.: entrega de trabalho). Fim antes do início = termina no dia seguinte.
+  const hasEnd = v.time && v.duration > 0;
+  let endCleared = !!v.time && v.duration === 0;
+  let lastDuration = hasEnd ? v.duration : null; // ao mudar o início, o fim acompanha mantendo a duração
+  const endInput = h('input', {
+    type: 'time', class: 'input input-compact', step: '300',
+    value: hasEnd ? minToTime((timeToMin(v.time) + v.duration) % 1440) : '',
+    onchange: () => { endCleared = !endInput.value; lastDuration = currentDuration() || null; syncEndNote(); },
+  });
+  const clearEnd = h('button', {
+    type: 'button', class: 'icon-btn sm', 'aria-label': 'Sem horário de fim', title: 'Sem horário de fim (sem duração)',
+    onclick: () => { endInput.value = ''; endCleared = true; lastDuration = null; syncEndNote(); },
+  }, icon('x', 16));
+  const endNote = h('span', { class: 'end-note' });
+  function currentDuration() {
+    if (!timeInput.value || !endInput.value) return 0;
+    let d = timeToMin(endInput.value) - timeToMin(timeInput.value);
+    if (d <= 0) d += 1440;
+    return d;
+  }
+  function syncEndNote() {
+    if (!timeInput.value) endNote.textContent = '';
+    else if (!endInput.value) endNote.textContent = 'sem duração';
+    else {
+      const nextDay = timeToMin(endInput.value) <= timeToMin(timeInput.value);
+      endNote.textContent = durationLabel(currentDuration()) + (nextDay ? ' · termina no dia seguinte' : '');
+    }
+  }
+  function onStartChange() {
+    if (timeInput.value) allDayInput.checked = false;
+    if (timeInput.value && !endCleared) {
+      const dur = lastDuration ?? settings.defaultEventDuration ?? 60;
+      endInput.value = dur > 0 ? minToTime((timeToMin(timeInput.value) + dur) % 1440) : '';
+      lastDuration = dur > 0 ? dur : null;
+    }
+    syncAllDay();
+    syncEndNote();
+  }
 
   const quickDates = [
     { label: 'Hoje', value: () => todayISO() },
@@ -103,8 +142,6 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     [...quickRow.children].forEach((c, i) => c.classList.toggle('active', dateInput.value === quickDates[i].value()));
   }
 
-  const durationSelect = h('select', { class: 'input input-compact' },
-    [...new Set([...DURATIONS, v.duration])].sort((a, b) => a - b).map((d) => h('option', { value: String(d), selected: d === v.duration }, durationLabel(d))));
 
   const prioRow = h('div', { class: 'prio-picker' });
   function renderPrio() {
@@ -287,9 +324,10 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     h('div', { class: 'toggle-row task-only' }, datedBtn, calBtn),
     h('div', { class: 'field-group when-dated' },
       field('calendar', 'Data', h('div', { class: 'stack-sm' }, dateInput, quickRow)),
-      field('clock', 'Hora', h('div', { class: 'row' }, timeInput, clearTime,
-        h('label', { class: 'check-label pure-event' }, allDayInput, 'Dia todo'))),
-      field('clock', 'Duração', durationSelect, 'when-cal'),
+      field('clock', h('span', null, h('span', { class: 'when-not-cal' }, 'Hora'), h('span', { class: 'when-cal' }, 'Início')),
+        h('div', { class: 'row' }, timeInput, clearTime,
+          h('label', { class: 'check-label pure-event' }, allDayInput, 'Dia todo'))),
+      field('clock', 'Fim', h('div', { class: 'row' }, endInput, clearEnd, endNote), 'when-cal'),
       field('repeat', 'Repetir', h('div', { class: 'stack-sm' }, repeatSelect, customPanel)),
       field('bell', 'Lembrete', reminderSelect)),
     h('div', { class: 'field-group when-cal' }, field('palette', 'Cor', colorRow)),
@@ -304,8 +342,13 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   function syncAllDay() {
     const allDay = kind === 'event' && allDayInput.checked;
     timeInput.disabled = allDay;
-    durationSelect.disabled = allDay;
-    if (allDay) timeInput.value = '';
+    endInput.disabled = allDay;
+    clearEnd.disabled = allDay;
+    if (allDay) {
+      timeInput.value = '';
+      endInput.value = '';
+    }
+    syncEndNote();
   }
 
   function sync() {
@@ -371,7 +414,8 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     if (!date && (kind === 'event' || time || wantsRepeat || reminder != null)) date = todayISO();
     if (!date) { time = null; reminder = null; }
     const recurrence = date && wantsRepeat ? readRecurrence(date) : null;
-    const duration = Number(durationSelect.value); // 0 = sem duração
+    // duração em minutos a partir de início/fim (0 = sem duração); sem horário, mantém a anterior
+    const duration = time ? currentDuration() : v.duration ?? 60;
     let addToCal = kind === 'task' && inCal && !!date;
 
     // Tarefa com data, mas fora do calendário: confirma antes de salvar

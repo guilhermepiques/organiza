@@ -88,7 +88,10 @@
 .editor[data-kind="event"] .task-only,
 .editor[data-kind="task"]:not([data-dated="true"]) .when-dated,
 .editor[data-kind="task"]:not([data-cal="true"]) .when-cal { display: none !important; }
-.when-dated, .when-cal { animation: rise .2s var(--ease); }
+.editor[data-kind="event"] .when-not-cal,
+.editor[data-kind="task"][data-cal="true"] .when-not-cal { display: none !important; }
+.when-dated, div.when-cal { animation: rise .2s var(--ease); }
+.end-note { font-size: 13px; color: var(--text-3); }
 .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .toggle-chip {
   display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: 12px;

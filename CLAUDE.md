@@ -30,7 +30,8 @@ App pessoal (PWA) de **tarefas + calendário + lista de compras**, em português
   - Tarefa nova começa **sem data**. O botão **"Data/Horário"** mostra data, hora, repetição e lembrete.
   - O botão **"Adicionar ao calendário"** (campo `block: true`) faz a tarefa aparecer no calendário, com duração e cor. **Tarefas sem esse botão não aparecem no calendário**, mesmo com data.
   - Se a tarefa tem data mas não está no calendário, ao salvar aparece o aviso "Adicionar ao calendário?" (Só na lista / Adicionar). Na adição rápida, o toast oferece o botão "Adicionar ao calendário".
-  - Duração tem a opção **"Sem duração"** (`duration: 0`), para prazos/entregas: aparece no calendário como marcação fina no horário. Use `?? 60` (nunca `|| 60`) ao ler duração, senão 0 vira 1h.
+  - Horário no editor = **Início e Fim** (pedido do usuário; substituiu o seletor de duração). Vale para eventos e tarefas no calendário; tarefa fora do calendário mostra só "Hora". Internamente continua salvo como `duration` (minutos). Mudar o início desloca o fim mantendo a duração; fim antes do início = termina no dia seguinte.
+  - **Fim vazio = "sem duração"** (`duration: 0`), para prazos/entregas: aparece no calendário como marcação fina no horário. Use `?? 60` (nunca `|| 60`) ao ler duração, senão 0 vira 1h.
   - Nada recebe data automaticamente (nem na visão Hoje); só quando o usuário escolhe ou escreve ("amanhã 18h"). Criar pelo calendário já vem com "Adicionar ao calendário" ligado.
 
 ## Tecnologia e arquitetura
