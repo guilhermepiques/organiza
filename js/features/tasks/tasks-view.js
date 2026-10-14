@@ -65,7 +65,6 @@ export function createTasksView() {
   // ---------- comportamento ----------
   function getDefaults() {
     const d = { view: view.key };
-    if (view.key === 'hoje') d.date = todayISO();
     if (view.key === 'projeto') d.projectId = view.id;
     if (view.key === 'etiqueta') d.labels = [view.id];
     return d;

@@ -6,7 +6,7 @@ import { icon } from '../../ui/icons.js';
 import { toast } from '../../ui/toast.js';
 import * as store from '../../core/store.js';
 import { normalize, capitalize } from '../../core/util.js';
-import { relativeLabel, todayISO } from '../../core/date.js';
+import { relativeLabel } from '../../core/date.js';
 import { describe } from '../../core/recurrence.js';
 import { parseTask } from './nlp.js';
 import { createTask, findOrCreateProject, projects } from './task-service.js';
@@ -59,7 +59,7 @@ export function createQuickAdd({ getDefaults }) {
     const d = getDefaults();
     const fields = {
       title: capitalize(p.title || text),
-      date: p.date ?? d.date ?? null,
+      date: p.date ?? null,
       time: p.time,
       priority: p.priority || 4,
       labels: [...new Set([...(d.labels || []), ...p.labels])],
@@ -72,12 +72,22 @@ export function createQuickAdd({ getDefaults }) {
   function add() {
     if (!input.value.trim()) return openFull();
     const fields = build();
-    store.batch('Tarefa criada', () => createTask(fields));
+    const task = store.batch('Tarefa criada', () => createTask(fields));
     input.value = '';
     update();
     const d = getDefaults();
-    // Avisa quando a tarefa foi para outro lugar (não aparece na visão atual)
-    if (fields.date && fields.date !== todayISO() && d.view === 'hoje') toast(`Tarefa criada para ${relativeLabel(fields.date).toLowerCase()}`);
+    if (fields.date) {
+      // Tarefa com data não vai sozinha para o calendário: oferece adicionar
+      const when = relativeLabel(fields.date).toLowerCase() + (fields.time ? ' ' + fields.time : '');
+      toast(`Tarefa criada para ${when}`, {
+        actionLabel: 'Adicionar ao calendário',
+        duration: 6000,
+        onAction: () => {
+          store.batch('Adicionada ao calendário', () => store.update('tasks', task.id, { block: true, duration: task.duration || 60 }));
+          toast('Adicionada ao calendário');
+        },
+      });
+    } else if (d.view === 'hoje' || d.view === 'proximos') toast('Tarefa criada na Entrada (sem data)');
     else if (fields.projectId && d.view !== 'projeto') toast(`Tarefa criada em ${store.get('projects', fields.projectId)?.name}`);
   }
 

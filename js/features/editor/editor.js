@@ -1,13 +1,17 @@
-// Editor único para Tarefa, Evento ou Tarefa + evento (tarefa que também ocupa um horário no calendário).
-// Usado pelas três abas.
+// Editor único de Tarefa ou Evento. Usado pelas três abas.
+//
+// Tarefa: começa sem data. O botão "Data/Horário" mostra data, hora, repetição e lembrete.
+// O botão "Adicionar ao calendário" faz a tarefa aparecer no calendário (campo `block`),
+// com duração e cor. Tarefa com data mas fora do calendário: ao salvar, pergunta se quer adicionar.
+// Evento: só existe no calendário (sempre com data).
 
 import { h, render, segmented, autoGrow } from '../../ui/dom.js';
 import { icon } from '../../ui/icons.js';
-import { openSheet, promptText } from '../../ui/sheet.js';
+import { openSheet, promptText, choiceDialog } from '../../ui/sheet.js';
 import { undoToast, toast } from '../../ui/toast.js';
 import * as store from '../../core/store.js';
 import { uid } from '../../core/util.js';
-import { todayISO, addDays, weekday, fromISO, WEEKDAYS, WEEKDAYS_LETTER, durationLabel } from '../../core/date.js';
+import { todayISO, addDays, weekday, fromISO, relativeLabel, WEEKDAYS, WEEKDAYS_LETTER, durationLabel } from '../../core/date.js';
 import { PRIORITIES, projects, createProject, labelsInUse, newTaskFields, toggleTask } from '../tasks/task-service.js';
 import { EVENT_COLORS } from '../settings/palettes.js';
 import { ensureNotificationPermission } from '../reminders/reminders.js';
@@ -15,7 +19,6 @@ import { ensureNotificationPermission } from '../reminders/reminders.js';
 const KINDS = [
   { value: 'task', label: 'Tarefa' },
   { value: 'event', label: 'Evento' },
-  { value: 'both', label: 'Os dois' },
 ];
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 180, 240, 480];
@@ -45,7 +48,8 @@ function presetOf(rule) {
 }
 
 /**
- * @param {{ id?: string, type?: 'task'|'event'|'both', defaults?: object }} opts
+ * @param {{ id?: string, type?: 'task'|'event', defaults?: object }} opts
+ *   defaults.block = true abre a tarefa já com "Adicionar ao calendário" ligado (ex.: criada pelo calendário).
  */
 export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   const settings = store.getSettings();
@@ -56,14 +60,17 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
 
   const v = {
     title: '', notes: '', date: null, time: null, duration: settings.defaultEventDuration || 60, allDay: false,
-    priority: 4, projectId: null, labels: [], subtasks: [], recurrence: null, reminder: null, color: null,
+    priority: 4, projectId: null, labels: [], subtasks: [], recurrence: null, reminder: null, color: null, block: false,
     ...(original || {}),
     ...defaults,
   };
   if (original && sourceCol === 'events') v.time = original.allDay ? null : original.time;
   if (!v.duration) v.duration = settings.defaultEventDuration || 60;
-  let kind = original ? (sourceCol === 'events' ? 'event' : original.block ? 'both' : 'task') : type;
-  if (kind !== 'task' && !v.date) v.date = todayISO();
+
+  let kind = original ? (sourceCol === 'events' ? 'event' : 'task') : type === 'event' ? 'event' : 'task';
+  let inCal = !!v.block || type === 'both';
+  let dated = !!v.date || inCal;
+  if ((kind === 'event' || inCal) && !v.date) v.date = todayISO();
   let subtasks = (v.subtasks || []).map((s) => ({ ...s }));
   let labels = [...(v.labels || [])];
   let color = v.color ?? null;
@@ -86,12 +93,11 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     { label: 'Hoje', value: () => todayISO() },
     { label: 'Amanhã', value: () => addDays(todayISO(), 1) },
     { label: 'Próx. semana', value: () => addDays(todayISO(), ((8 - weekday(todayISO())) % 7) || 7) },
-    { label: 'Sem data', value: () => '', taskOnly: true },
   ];
   const quickRow = h('div', { class: 'chips' }, quickDates.map((q) =>
     h('button', {
-      type: 'button', class: `chip ${q.taskOnly ? 'pure-task' : ''}`,
-      onclick: () => { dateInput.value = q.value(); if (!dateInput.value) timeInput.value = ''; refreshRepeatLabels(); syncQuick(); },
+      type: 'button', class: 'chip',
+      onclick: () => { dateInput.value = q.value(); refreshRepeatLabels(); syncQuick(); },
     }, q.label)));
   function syncQuick() {
     [...quickRow.children].forEach((c, i) => c.classList.toggle('active', dateInput.value === quickDates[i].value()));
@@ -119,7 +125,7 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     } else fillProjects(v.projectId);
   } });
   function fillProjects(selected) {
-    render(projectSelect, 
+    render(projectSelect,
       h('option', { value: '' }, 'Entrada (sem projeto)'),
       ...projects().map((p) => h('option', { value: p.id, selected: p.id === selected }, p.name)),
       h('option', { value: '__new' }, '+ Novo projeto…'));
@@ -144,7 +150,7 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   function renderLabels() {
     const known = labelsInUse().map((l) => l.name);
     const all = [...new Set([...known, ...labels])];
-    render(labelsWrap, 
+    render(labelsWrap,
       ...all.map((name) => h('button', {
         type: 'button', class: `chip ${labels.includes(name) ? 'active' : ''}`,
         onclick: () => { labels = labels.includes(name) ? labels.filter((l) => l !== name) : [...labels, name]; renderLabels(); },
@@ -235,15 +241,34 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   }
   renderSubtasks();
 
+  // ---------- botões "Data/Horário" e "Adicionar ao calendário" ----------
+  const toggleChip = (iconName, label, onClick) => h('button', { type: 'button', class: 'toggle-chip', 'aria-pressed': 'false', onclick: onClick },
+    icon(iconName, 18), h('span', null, label), h('span', { class: 'toggle-tick' }, icon('check', 16)));
+  const datedBtn = toggleChip('clock', 'Data/Horário', () => {
+    dated = !dated;
+    if (!dated) inCal = false;
+    sync();
+    if (dated && !dateInput.value) dateInput.focus();
+  });
+  const calBtn = toggleChip('calendarDays', 'Adicionar ao calendário', () => {
+    inCal = !inCal;
+    if (inCal) {
+      dated = true;
+      if (!dateInput.value) dateInput.value = todayISO();
+      refreshRepeatLabels();
+      syncQuick();
+    }
+    sync();
+  });
+
   // ---------- layout ----------
   const field = (iconName, label, control, cls = '') =>
     h('div', { class: `field ${cls}` }, h('div', { class: 'field-label' }, icon(iconName, 16), label), h('div', { class: 'field-control' }, control));
 
   const kindSwitch = segmented(KINDS, kind, (k) => {
     kind = k;
-    form.dataset.kind = k;
-    if (k !== 'task' && !dateInput.value) dateInput.value = todayISO();
-    syncAllDay();
+    if (k === 'event' && !dateInput.value) dateInput.value = todayISO();
+    sync();
   }, { className: 'kind-switch' });
 
   const doneToggle = !isNew && sourceCol === 'tasks'
@@ -255,22 +280,23 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
         } }, icon('check', 14))
     : null;
 
-  const form = h('form', { class: 'editor', dataset: { kind }, onsubmit: (e) => { e.preventDefault(); save(); } },
+  const form = h('form', { class: 'editor', onsubmit: (e) => { e.preventDefault(); save(); } },
     kindSwitch,
     h('div', { class: 'editor-head' }, doneToggle, titleInput),
     notesInput,
-    h('div', { class: 'field-group' },
+    h('div', { class: 'toggle-row task-only' }, datedBtn, calBtn),
+    h('div', { class: 'field-group when-dated' },
       field('calendar', 'Data', h('div', { class: 'stack-sm' }, dateInput, quickRow)),
       field('clock', 'Hora', h('div', { class: 'row' }, timeInput, clearTime,
         h('label', { class: 'check-label pure-event' }, allDayInput, 'Dia todo'))),
-      field('clock', 'Duração', durationSelect, 'event-only'),
+      field('clock', 'Duração', durationSelect, 'when-cal'),
       field('repeat', 'Repetir', h('div', { class: 'stack-sm' }, repeatSelect, customPanel)),
       field('bell', 'Lembrete', reminderSelect)),
+    h('div', { class: 'field-group when-cal' }, field('palette', 'Cor', colorRow)),
     h('div', { class: 'field-group task-only' },
       field('flag', 'Prioridade', prioRow),
       field('folder', 'Projeto', projectSelect),
       field('tag', 'Etiquetas', labelsWrap)),
-    h('div', { class: 'field-group event-only' }, field('palette', 'Cor', colorRow)),
     h('div', { class: 'field-group task-only' },
       h('div', { class: 'field-label' }, icon('checkCircle', 16), 'Subtarefas'),
       subList, subInput));
@@ -281,8 +307,18 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     durationSelect.disabled = allDay;
     if (allDay) timeInput.value = '';
   }
-  syncAllDay();
-  syncQuick();
+
+  function sync() {
+    form.dataset.kind = kind;
+    form.dataset.dated = String(dated);
+    form.dataset.cal = String(inCal);
+    datedBtn.setAttribute('aria-pressed', String(dated));
+    calBtn.setAttribute('aria-pressed', String(inCal));
+    const titleEl = s?.el.querySelector('.sheet-title');
+    if (titleEl) titleEl.textContent = sheetTitle();
+    syncAllDay();
+  }
+  const sheetTitle = () => (isNew ? (kind === 'event' ? 'Novo evento' : 'Nova tarefa') : kind === 'event' ? 'Editar evento' : 'Editar tarefa');
 
   const footer = [
     !isNew ? h('button', { type: 'button', class: 'btn btn-ghost danger', onclick: remove }, icon('trash', 18), 'Excluir') : null,
@@ -291,7 +327,10 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     h('button', { type: 'button', class: 'btn btn-primary', onclick: save }, isNew ? 'Criar' : 'Salvar'),
   ];
 
-  const s = openSheet({ title: isNew ? 'Novo' : 'Editar', body: form, footer, size: 'large', className: 'editor-sheet' });
+  let s = null;
+  sync();
+  syncQuick();
+  s = openSheet({ title: sheetTitle(), body: form, footer, size: 'large', className: 'editor-sheet' });
 
   // ---------- ações ----------
   function readRecurrence(date) {
@@ -313,7 +352,9 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
     }
   }
 
+  let saving = false;
   async function save() {
+    if (saving) return;
     const title = titleInput.value.trim();
     if (!title) {
       titleInput.focus();
@@ -321,14 +362,36 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
       setTimeout(() => titleInput.classList.remove('shake'), 400);
       return;
     }
-    let date = dateInput.value || null;
-    let time = timeInput.value || null;
-    if (kind !== 'task' && !date) date = todayISO();
-    const recurrence = date && repeatSelect.value !== 'none' ? readRecurrence(date) : null;
-    const reminder = reminderSelect.value === '' ? null : Number(reminderSelect.value);
+    const hasDateFields = kind === 'event' || dated;
+    let date = hasDateFields ? dateInput.value || null : null;
+    let time = hasDateFields ? timeInput.value || null : null;
+    const wantsRepeat = hasDateFields && repeatSelect.value !== 'none';
+    let reminder = hasDateFields && reminderSelect.value !== '' ? Number(reminderSelect.value) : null;
+    // hora, repetição ou lembrete sem dia escolhido = hoje
+    if (!date && (kind === 'event' || time || wantsRepeat || reminder != null)) date = todayISO();
+    if (!date) { time = null; reminder = null; }
+    const recurrence = date && wantsRepeat ? readRecurrence(date) : null;
     const duration = Number(durationSelect.value) || 60;
-    const common = { title, notes: notesInput.value.trim(), date, recurrence, reminder };
+    let addToCal = kind === 'task' && inCal && !!date;
 
+    // Tarefa com data, mas fora do calendário: confirma antes de salvar
+    if (kind === 'task' && date && !addToCal && (isNew || !original?.date)) {
+      saving = true;
+      const when = `${relativeLabel(date).toLowerCase()}${time ? ' às ' + time : ''}`;
+      const answer = await choiceDialog({
+        title: 'Adicionar ao calendário?',
+        message: `Esta tarefa tem data (${when}), mas não vai aparecer no calendário.`,
+        options: [
+          { value: 'list', label: 'Só na lista' },
+          { value: 'cal', label: 'Adicionar ao calendário', primary: true },
+        ],
+      });
+      saving = false;
+      if (!answer) return; // fechou o aviso: volta para o editor
+      addToCal = answer === 'cal';
+    }
+
+    const common = { title, notes: notesInput.value.trim(), date, recurrence, reminder };
     let label;
     store.batch(isNew ? 'Item criado' : 'Item alterado', () => {
       if (kind === 'event') {
@@ -343,20 +406,20 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
       } else {
         const payload = {
           ...common, time, priority, labels, projectId: projectSelect.value && projectSelect.value !== '__new' ? projectSelect.value : null,
-          subtasks: subtasks.filter((s) => s.title.trim()), block: kind === 'both',
-          duration: kind === 'both' ? duration : original?.duration ?? null,
-          color: kind === 'both' ? color : null,
+          subtasks: subtasks.filter((st) => st.title.trim()), block: addToCal,
+          duration: addToCal ? duration : original?.duration ?? null,
+          color: addToCal ? color : null,
         };
         if (original && sourceCol === 'tasks') store.update('tasks', id, payload);
         else {
           if (original) store.remove('events', id);
           store.create('tasks', newTaskFields(payload));
         }
-        label = isNew ? 'Tarefa criada' : 'Tarefa salva';
+        label = isNew ? (addToCal ? 'Tarefa criada e adicionada ao calendário' : 'Tarefa criada') : 'Tarefa salva';
       }
     });
     await s.close();
-    if (isNew && defaults.__announce !== false) toast(label + (date ? ` · ${date === todayISO() ? 'hoje' : date.split('-').reverse().slice(0, 2).join('/')}` : ''));
+    if (isNew && defaults.__announce !== false) toast(label + (date && !addToCal && kind === 'task' ? ` · ${relativeLabel(date).toLowerCase()}` : ''));
     if (reminder != null) ensureNotificationPermission();
   }
 
@@ -374,9 +437,10 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   return s;
 }
 
-/** Atalho para criar um evento a partir de um horário do calendário. */
+/** Atalho para criar um evento a partir de um horário do calendário.
+ *  Se o usuário trocar para "Tarefa", ela já vem com "Adicionar ao calendário" ligado. */
 export function openNewEvent(date, time) {
   const settings = store.getSettings();
   const dur = settings.defaultEventDuration || 60;
-  return openEditor({ type: 'event', defaults: { date, time, duration: dur } });
+  return openEditor({ type: 'event', defaults: { date, time, duration: dur, block: true } });
 }

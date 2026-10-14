@@ -87,7 +87,7 @@ export function createCalendarView() {
       title: 'Calendário',
       items: [
         { label: 'Novo evento', icon: 'plus', onClick: () => openNewEvent(anchor, '09:00') },
-        { label: 'Nova tarefa com data', icon: 'tasks', onClick: () => openEditor({ type: 'task', defaults: { date: anchor } }) },
+        { label: 'Nova tarefa no calendário', icon: 'tasks', onClick: () => openEditor({ type: 'task', defaults: { date: anchor, block: true } }) },
         { separator: true },
         { label: 'Exportar para Google Agenda (.ics)', icon: 'download', onClick: openExport },
         {
@@ -107,7 +107,7 @@ export function createCalendarView() {
       size: 'small',
       body: h('div', { class: 'stack' },
         h('label', { class: 'check-label' }, evCheck, 'Eventos'),
-        h('label', { class: 'check-label' }, tkCheck, 'Tarefas pendentes com data'),
+        h('label', { class: 'check-label' }, tkCheck, 'Tarefas do calendário (pendentes)'),
         h('div', { class: 'note' },
           h('strong', null, 'Como importar no Google Agenda: '),
           'abra calendar.google.com no computador → Configurações (engrenagem) → Importar e exportar → selecione o arquivo .ics. No celular, abrir o arquivo também oferece adicionar à agenda.')),
@@ -125,7 +125,7 @@ export function createCalendarView() {
   // ---------- itens ----------
   function openItem(it) {
     if (it.kind === 'event') openEditor({ id: it.id, type: 'event' });
-    else openEditor({ id: it.id, type: it.block ? 'both' : 'task' });
+    else openEditor({ id: it.id, type: 'task' });
   }
 
   function checkFor(it) {
@@ -185,7 +185,7 @@ export function createCalendarView() {
       h('div', { class: 'cal-allday-label' }, 'dia'),
       days.map((d) => h('div', {
         class: 'cal-allday-cell',
-        onclick: () => openEditor({ type: 'task', defaults: { date: d } }),
+        onclick: () => openEditor({ type: 'task', defaults: { date: d, block: true } }),
       }, occ.get(d).allDay.map(chip))));
 
     const gutter = h('div', { class: 'cal-gutter' },

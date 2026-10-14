@@ -45,7 +45,7 @@ export function taskMeta(task, { hideDate = false, hideProject = false } = {}) {
   }
   if (task.recurrence) parts.push(h('span', { class: 'meta', title: describe(task.recurrence, task.date) }, icon('repeat', 13)));
   if (task.reminder != null) parts.push(h('span', { class: 'meta', title: 'Lembrete' }, icon('bell', 13)));
-  if (task.block) parts.push(h('span', { class: 'meta', title: 'Também no calendário' }, icon('calendarDays', 13)));
+  if (task.block) parts.push(h('span', { class: 'meta', title: 'No calendário' }, icon('calendarDays', 13)));
   if (task.subtasks?.length) {
     const done = task.subtasks.filter((s) => s.done).length;
     parts.push(h('span', { class: 'meta' }, icon('checkCircle', 13), `${done}/${task.subtasks.length}`));
@@ -64,9 +64,9 @@ export function taskRow(task, opts = {}) {
     class: `task-row ${task.done ? 'done' : ''}`,
     dataset: { id: task.id },
     tabindex: '0',
-    onclick: () => openEditor({ id: task.id, type: task.block ? 'both' : 'task' }),
+    onclick: () => openEditor({ id: task.id, type: 'task' }),
     onkeydown: (e) => {
-      if (e.key === 'Enter') openEditor({ id: task.id, type: task.block ? 'both' : 'task' });
+      if (e.key === 'Enter') openEditor({ id: task.id, type: 'task' });
     },
   },
   checkButton(task),

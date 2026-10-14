@@ -50,8 +50,8 @@ export function buildICS({ events = true, tasks = true } = {}) {
   }
   if (tasks) {
     for (const t of store.all('tasks')) {
-      if (!t.date || t.done) continue;
-      lines.push(...vevent({ uid: t.id, title: '☐ ' + t.title, notes: t.notes, date: t.date, time: t.time, duration: t.block ? t.duration : 30, recurrence: t.recurrence }));
+      if (!t.block || !t.date || t.done) continue;
+      lines.push(...vevent({ uid: t.id, title: '☐ ' + t.title, notes: t.notes, date: t.date, time: t.time, duration: t.duration || 60, recurrence: t.recurrence }));
       count++;
     }
   }

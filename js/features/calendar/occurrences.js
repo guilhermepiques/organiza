@@ -32,15 +32,16 @@ export function occurrencesForRange(from, to) {
     }
   }
 
+  // Só entram no calendário as tarefas marcadas com "Adicionar ao calendário" (campo block)
   for (const t of store.all('tasks')) {
-    if (!t.date || t.date < from || t.date > to) continue;
+    if (!t.block || !t.date || t.date < from || t.date > to) continue;
     if (t.done && !settings.showDoneInCalendar) continue;
     const start = t.time ? timeToMin(t.time) : null;
-    const dur = t.block ? t.duration || 60 : 30;
+    const dur = t.duration || 60;
     put({
       kind: 'task', id: t.id, title: t.title, date: t.date, start,
       end: start == null ? null : Math.min(24 * 60, start + dur),
-      color: t.block ? t.color : null, done: t.done, priority: t.priority, block: t.block, recurring: !!t.recurrence,
+      color: t.color, done: t.done, priority: t.priority, block: true, recurring: !!t.recurrence,
     });
   }
 

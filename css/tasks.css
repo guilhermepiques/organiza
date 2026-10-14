@@ -85,10 +85,21 @@
 .field-label { display: flex; align-items: center; gap: 8px; width: 96px; flex: none; font-size: 14px; color: var(--text-2); }
 .field-control { flex: 1; min-width: 0; display: flex; }
 .field-group .input { background: var(--surface); }
-.editor:not([data-kind="task"]) .pure-task,
 .editor:not([data-kind="event"]) .pure-event,
 .editor[data-kind="event"] .task-only,
-.editor[data-kind="task"] .event-only { display: none !important; }
+.editor[data-kind="task"]:not([data-dated="true"]) .when-dated,
+.editor[data-kind="task"]:not([data-cal="true"]) .when-cal { display: none !important; }
+.when-dated, .when-cal { animation: rise .2s var(--ease); }
+.toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.toggle-chip {
+  display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 14px; font-weight: 600;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.toggle-chip .toggle-tick { display: none; }
+.toggle-chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+.toggle-chip[aria-pressed="true"] .toggle-tick { display: inline-grid; }
+@media (hover: hover) { .toggle-chip:hover { border-color: var(--border-strong); } }
 .prio-picker { display: flex; gap: 4px; flex-wrap: wrap; }
 .editor .chip { height: 30px; padding: 0 10px; font-size: 13px; }
 .prio-btn { display: inline-flex; align-items: center; gap: 3px; height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; font-weight: 700; color: var(--c); }

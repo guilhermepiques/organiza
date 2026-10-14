@@ -25,7 +25,12 @@ App pessoal (PWA) de **tarefas + calendário + lista de compras**, em português
 - **Mobile-first**: alvos de toque ≥ 44px, navegação inferior com 3 abas (Tarefas, Calendário, Compras), campo de adicionar no rodapé (uso com uma mão), painéis "bottom sheet". Campos com fonte ≥ 16px (evita zoom no iPhone).
 - **PC (≥ 900px)**: barra lateral com as abas + barra lateral de visões em Tarefas; conteúdo centralizado (máx. 760px). Painéis viram janelas centrais (≥ 700px).
 - Prioridades: P1 vermelho, P2 laranja, P3 azul, P4 sem prioridade (cinza).
-- "Tarefa / Evento / Os dois": evento só aparece no calendário; tarefa aparece na lista (e no calendário se tiver data); "os dois" é uma tarefa com `block: true`, que ocupa um bloco de horário (duração e cor) no calendário.
+- **Tarefa × Evento** (pedido do usuário, substituiu o antigo "Os dois"):
+  - O editor tem só **Tarefa | Evento**. Evento existe só no calendário (sempre com data).
+  - Tarefa nova começa **sem data**. O botão **"Data/Horário"** mostra data, hora, repetição e lembrete.
+  - O botão **"Adicionar ao calendário"** (campo `block: true`) faz a tarefa aparecer no calendário, com duração e cor. **Tarefas sem esse botão não aparecem no calendário**, mesmo com data.
+  - Se a tarefa tem data mas não está no calendário, ao salvar aparece o aviso "Adicionar ao calendário?" (Só na lista / Adicionar). Na adição rápida, o toast oferece o botão "Adicionar ao calendário".
+  - Nada recebe data automaticamente (nem na visão Hoje); só quando o usuário escolhe ou escreve ("amanhã 18h"). Criar pelo calendário já vem com "Adicionar ao calendário" ligado.
 
 ## Tecnologia e arquitetura
 
@@ -64,13 +69,14 @@ js/features/
 - Cada tela exporta `createXView()` → `{ el, activate(parts), refresh() }`. Só a aba visível é redesenhada quando o store muda.
 - Telas **nunca** falam com o banco direto: usam `store.create/update/remove`, e agrupam ações com `store.batch('Rótulo', fn)` para permitir **Desfazer** (`undoToast`).
 - Use `render(el, ...)` (ignora `null`) em vez de `replaceChildren` (que escreve "null" na tela).
+- Painéis: `onClose` roda só depois que o histórico assentou; para encadear (fechar e abrir outro, ou navegar), use `await sheet.close()`. Perguntas: `confirmDialog`, `choiceDialog`, `promptText` em `ui/sheet.js`.
 - Variáveis CSS em estilos inline: `h('div', { style: { '--c': cor } })` (o helper usa `setProperty`).
 - Todo registro tem `id`, `createdAt`, `updatedAt`; exclusão é lógica (`deleted: true`) para facilitar sincronização futura.
 - Ao adicionar arquivos novos, nada precisa ser listado no `sw.js`: a página envia ao service worker a lista de recursos carregados. Ao mudar muito a estrutura, aumente `VERSION` no `sw.js`.
 
 ### Modelo de dados (coleções)
 
-- `tasks`: title, notes, date, time, duration, priority (1–4), labels[], projectId, subtasks[{id,title,done}], recurrence, reminder (min antes), block, color, done, doneAt, order
+- `tasks`: title, notes, date, time, duration, priority (1–4), labels[], projectId, subtasks[{id,title,done}], recurrence, reminder (min antes), block (= está no calendário), color, done, doneAt, order
 - `events`: title, notes, date, time, duration, allDay, color, recurrence, reminder
 - `projects`: name, color, order
 - `lists`: name, order · `items`: listId, name, qty, unit, note, price (por unidade), category, bought, boughtAt, order
@@ -86,7 +92,7 @@ IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de
 
 ### Feitas (v0.1)
 - Tarefas: adicionar rápido com linguagem natural (hoje/amanhã/dias da semana/dia 15/15/10/“às 9”/18h/de manhã, `#projeto`, `@etiqueta`, `p1`/`!1`, “toda segunda e quarta”, “todo mês”, “a cada 2 semanas”, “dias úteis”) com prévia; editor completo; subtarefas; recorrência (avança ao concluir); lembretes; visões Entrada/Hoje/Próximos/Concluídas/projeto/etiqueta; busca; ordenar; filtrar por prioridade; reagendar atrasadas; deslizar para concluir/excluir; desfazer; resumo de produtividade (hoje, semana, sequência, gráfico 7 dias); projetos (criar, renomear, cor, excluir).
-- Calendário: Dia/Semana/Mês, navegação (botões e deslizar), linha do “agora”, criar evento tocando no horário, eventos com cor/duração/repetição/dia todo, tarefas aparecem automaticamente, concluir pelo calendário, exportar `.ics`.
+- Calendário: Dia/Semana/Mês, navegação (botões e deslizar), linha do “agora”, criar evento tocando no horário, eventos com cor/duração/repetição/dia todo, tarefas marcadas com "Adicionar ao calendário" aparecem como blocos, concluir pelo calendário, exportar `.ics`.
 - Compras: várias listas (criar, renomear, duplicar, copiar de outra, excluir), adicionar vários itens de uma vez, quantidade/unidade/preço/observação, categoria automática que aprende, agrupado por corredor, comprados vão para “No carrinho”, limpar comprados, desmarcar todos, autocompletar + sugestões frequentes, total estimado, compartilhar (WhatsApp/copiar), transformar item/lista em tarefa.
 - Ajustes: tema, paletas de teste, início da semana, duração padrão, notificações, instalar app, backup JSON (exportar/importar), dados de exemplo, apagar tudo.
 - PWA: manifest, ícones, service worker offline.

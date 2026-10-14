@@ -8,7 +8,6 @@ import { swipeable } from '../../ui/swipe.js';
 import * as store from '../../core/store.js';
 import { navigate } from '../../core/router.js';
 import { formatMoney, parseNumber, formatNumber } from '../../core/util.js';
-import { todayISO } from '../../core/date.js';
 import { uid } from '../../core/util.js';
 import {
   lists, ensureDefaultList, createList, renameList, deleteList, duplicateList, itemsOf, groupedItems,
@@ -183,7 +182,6 @@ export function createShoppingView() {
       type: 'task',
       defaults: {
         title: `Compras: ${list.name}`,
-        date: todayISO(),
         subtasks: pending.map((i) => ({ id: uid(), title: `${i.name}${qtyLabel(i) ? ' — ' + qtyLabel(i) : ''}`, done: false })),
         labels: ['compras'],
       },
@@ -249,7 +247,7 @@ export function createShoppingView() {
         h('label', { class: 'field-v' }, h('span', null, 'Observação'), note),
         h('button', { type: 'button', class: 'btn btn-ghost', onclick: async () => {
           await s.close();
-          openEditor({ type: 'task', defaults: { title: `Comprar ${item.name}`, date: todayISO(), labels: ['compras'] } });
+          openEditor({ type: 'task', defaults: { title: `Comprar ${item.name}`, labels: ['compras'] } });
         } }, icon('tasks', 18), 'Transformar em tarefa')),
       footer: [
         h('button', { type: 'button', class: 'btn btn-ghost danger', onclick: async () => {

@@ -58,14 +58,16 @@ export function openSheet({ title, body, footer, headerActions, className = '', 
         sheet.remove();
         backdrop.remove();
       }, 280);
-      onClose?.();
-      if (fromPop) return Promise.resolve();
-      return new Promise((resolve) => {
-        ignorePops++;
-        popWaiters.push(resolve);
-        history.back();
-        setTimeout(resolve, 400); // segurança caso o popstate não venha
-      });
+      const done = fromPop
+        ? Promise.resolve()
+        : new Promise((resolve) => {
+            ignorePops++;
+            popWaiters.push(resolve);
+            history.back();
+            setTimeout(resolve, 400); // segurança caso o popstate não venha
+          });
+      // onClose só roda depois que o histórico assentou, para que o próximo painel/navegação não se atrapalhe
+      return done.then(() => onClose?.());
     },
   };
 
@@ -133,6 +135,30 @@ export function promptText({ title, value = '', placeholder = '', okLabel = 'Sal
         h('button', { class: 'btn', type: 'button', onclick: () => s.close() }, 'Cancelar'),
         h('button', { class: 'btn btn-primary', type: 'button', onclick: () => form.requestSubmit() }, okLabel),
       ],
+      onClose: () => resolve(result),
+    });
+  });
+}
+
+/**
+ * Pergunta com várias respostas: options = [{ value, label, primary }].
+ * Resolve com o value escolhido, ou null se o painel foi fechado sem escolher.
+ */
+export function choiceDialog({ title, message, options }) {
+  return new Promise((resolve) => {
+    let result = null;
+    const s = openSheet({
+      title,
+      body: h('p', { class: 'muted' }, message),
+      size: 'small',
+      footer: options.map((o) => h('button', {
+        type: 'button',
+        class: `btn grow ${o.primary ? 'btn-primary' : ''}`,
+        onclick: () => {
+          result = o.value;
+          s.close();
+        },
+      }, o.label)),
       onClose: () => resolve(result),
     });
   });
