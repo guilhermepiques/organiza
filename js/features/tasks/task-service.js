@@ -211,7 +211,12 @@ export function groupsFor(view, { sort = 'smart', search = '', priorities = null
     }
     case 'entrada':
     default:
-      // Entrada = todas as tarefas pendentes (com ou sem projeto)
+      // Entrada = todas as tarefas pendentes (com ou sem projeto).
+      // Ordem (pedido do usuário): primeiro as sem data, depois por data (atrasadas, hoje, amanhã…),
+      // a menos que ele escolha outra ordenação (prioridade, nome, recentes).
+      if (sort === 'smart' || sort === 'date') {
+        return [{ id: 'entrada', tasks: open.sort((a, b) => !!a.date - !!b.date || sorter(a, b)) }];
+      }
       return [{ id: 'entrada', tasks: open.sort(sorter) }];
   }
 }
