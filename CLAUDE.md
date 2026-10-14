@@ -13,7 +13,7 @@ App pessoal (PWA) de **tarefas + calendário + lista de compras**, em português
 - Pode **sugerir ideias**, mas **quem decide é o usuário**.
 - Se algo for ambíguo: no máximo **3 perguntas rápidas**; senão, comece direto.
 - A cada etapa: diga **o que foi feito** e **o que sugere de próximo**.
-- **Commits pequenos e frequentes**, mensagens claras em **português**, e `git push` ao final de cada etapa.
+- **Commits pequenos e frequentes**, mensagens claras em **português**, e `git push` ao final de cada etapa. No PowerShell 5.1, mensagens com aspas quebram: escreva a mensagem num arquivo e use `git commit -F arquivo`.
 - **Nunca** salvar senhas, tokens ou chaves no projeto.
 - Comunicação com o usuário sempre em português do Brasil.
 
@@ -91,6 +91,8 @@ IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de
 ## Funcionalidades
 
 ### Feitas (v0.1)
+- **Entrada = todas as tarefas pendentes** (com ou sem projeto), pedido do usuário. Projetos continuam filtrando só as suas tarefas.
+- Offline testado: com o servidor desligado o app abre e salva normalmente. O service worker usa a rede com limite de 3s (internet ruim → usa o cache) e copia o cache antigo ao atualizar de versão.
 - Tarefas: adicionar rápido com linguagem natural (hoje/amanhã/dias da semana/dia 15/15/10/“às 9”/18h/de manhã, `#projeto`, `@etiqueta`, `p1`/`!1`, “toda segunda e quarta”, “todo mês”, “a cada 2 semanas”, “dias úteis”) com prévia; editor completo; subtarefas; recorrência (avança ao concluir); lembretes; visões Entrada/Hoje/Próximos/Concluídas/projeto/etiqueta; busca; ordenar; filtrar por prioridade; reagendar atrasadas; deslizar para concluir/excluir; desfazer; resumo de produtividade (hoje, semana, sequência, gráfico 7 dias); projetos (criar, renomear, cor, excluir).
 - Calendário: Dia/Semana/Mês, navegação (botões e deslizar), linha do “agora”, criar evento tocando no horário, eventos com cor/duração/repetição/dia todo, tarefas marcadas com "Adicionar ao calendário" aparecem como blocos, concluir pelo calendário, exportar `.ics`.
 - Compras: várias listas (criar, renomear, duplicar, copiar de outra, excluir), adicionar vários itens de uma vez, quantidade/unidade/preço/observação, categoria automática que aprende, agrupado por corredor, comprados vão para “No carrinho”, limpar comprados, desmarcar todos, autocompletar + sugestões frequentes, total estimado, compartilhar (WhatsApp/copiar), transformar item/lista em tarefa.

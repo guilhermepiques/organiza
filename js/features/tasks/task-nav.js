@@ -28,7 +28,7 @@ function projectMenu(p) {
       } },
       { separator: true },
       { label: 'Excluir projeto', icon: 'trash', danger: true, onClick: async () => {
-        const ok = await confirmDialog({ title: 'Excluir projeto?', message: `As tarefas de "${p.name}" vão para a Entrada.`, okLabel: 'Excluir', danger: true });
+        const ok = await confirmDialog({ title: 'Excluir projeto?', message: `As tarefas de "${p.name}" ficam sem projeto (continuam na Entrada).`, okLabel: 'Excluir', danger: true });
         if (ok) {
           deleteProject(p.id);
           undoToast('Projeto excluído');

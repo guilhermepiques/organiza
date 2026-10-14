@@ -211,7 +211,8 @@ export function groupsFor(view, { sort = 'smart', search = '', priorities = null
     }
     case 'entrada':
     default:
-      return [{ id: 'entrada', tasks: open.filter((t) => !t.projectId).sort(sorter) }];
+      // Entrada = todas as tarefas pendentes (com ou sem projeto)
+      return [{ id: 'entrada', tasks: open.sort(sorter) }];
   }
 }
 
@@ -221,7 +222,7 @@ export function counts() {
   const byProject = {};
   for (const t of open) if (t.projectId) byProject[t.projectId] = (byProject[t.projectId] || 0) + 1;
   return {
-    entrada: open.filter((t) => !t.projectId).length,
+    entrada: open.length,
     hoje: open.filter((t) => t.date && t.date <= today).length,
     proximos: open.filter((t) => t.date && t.date >= today).length,
     byProject,

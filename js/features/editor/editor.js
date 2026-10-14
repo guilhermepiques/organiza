@@ -126,7 +126,7 @@ export function openEditor({ id = null, type = 'task', defaults = {} } = {}) {
   } });
   function fillProjects(selected) {
     render(projectSelect,
-      h('option', { value: '' }, 'Entrada (sem projeto)'),
+      h('option', { value: '' }, 'Sem projeto'),
       ...projects().map((p) => h('option', { value: p.id, selected: p.id === selected }, p.name)),
       h('option', { value: '__new' }, '+ Novo projeto…'));
     projectSelect.value = selected || '';

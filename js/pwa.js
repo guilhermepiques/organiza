@@ -29,9 +29,14 @@ export async function registerServiceWorker() {
     const reg = await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
     // Garante que todos os arquivos carregados nesta visita fiquem disponíveis offline
-    const urls = [location.href.split('#')[0], ...performance.getEntriesByType('resource').map((e) => e.name)]
-      .filter((u) => u.startsWith(location.origin));
-    (reg.active || navigator.serviceWorker.controller)?.postMessage({ type: 'cache-urls', urls });
+    const sendUrls = (worker) => {
+      const urls = [location.href.split('#')[0], ...performance.getEntriesByType('resource').map((e) => e.name)]
+        .filter((u) => u.startsWith(location.origin));
+      worker?.postMessage({ type: 'cache-urls', urls });
+    };
+    sendUrls(reg.active || navigator.serviceWorker.controller);
+    // quando uma versão nova do service worker assume, ela também recebe a lista
+    navigator.serviceWorker.addEventListener('controllerchange', () => sendUrls(navigator.serviceWorker.controller));
   } catch (e) {
     console.warn('Service worker não registrado:', e);
   }

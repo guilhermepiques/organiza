@@ -17,7 +17,7 @@ import { openSettings } from '../settings/settings-view.js';
 
 const EMPTY = {
   hoje: ['sun', 'Tudo em dia!', 'Nenhuma tarefa para hoje. Adicione abaixo ou aproveite o dia.'],
-  entrada: ['inbox', 'Entrada vazia', 'Tarefas sem projeto aparecem aqui.'],
+  entrada: ['inbox', 'Nenhuma tarefa pendente', 'Todas as suas tarefas, de todos os projetos, aparecem aqui.'],
   concluidas: ['checkCircle', 'Nada concluído ainda', 'As tarefas concluídas ficam guardadas aqui.'],
   projeto: ['folder', 'Projeto vazio', 'Adicione a primeira tarefa deste projeto abaixo.'],
   etiqueta: ['tag', 'Nenhuma tarefa', 'Nenhuma tarefa pendente com esta etiqueta.'],

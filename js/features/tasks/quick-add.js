@@ -88,7 +88,7 @@ export function createQuickAdd({ getDefaults }) {
         },
       });
     } else if (d.view === 'hoje' || d.view === 'proximos') toast('Tarefa criada na Entrada (sem data)');
-    else if (fields.projectId && d.view !== 'projeto') toast(`Tarefa criada em ${store.get('projects', fields.projectId)?.name}`);
+    else if (fields.projectId && d.view !== 'projeto' && d.view !== 'entrada') toast(`Tarefa criada em ${store.get('projects', fields.projectId)?.name}`);
   }
 
   function openFull() {
