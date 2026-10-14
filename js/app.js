@@ -9,6 +9,7 @@ import { createTasksView } from './features/tasks/tasks-view.js';
 import { createCalendarView } from './features/calendar/calendar-view.js';
 import { createShoppingView } from './features/shopping/shopping-view.js';
 import { openSettings } from './features/settings/settings-view.js';
+import { openSearch } from './features/search/search.js';
 import { startReminders } from './features/reminders/reminders.js';
 import { registerServiceWorker } from './pwa.js';
 
@@ -39,6 +40,8 @@ async function main() {
   render(tabbar,
     h('div', { class: 'brand' }, h('img', { src: 'icons/icon.svg', alt: '', width: 28, height: 28 }), h('span', null, 'Organiza')),
     tabButtons,
+    h('button', { type: 'button', class: 'tab tab-search', onclick: openSearch, 'aria-label': 'Buscar', title: 'Buscar (Ctrl+K)' },
+      h('span', { class: 'tab-icon' }, icon('search', 22)), h('span', { class: 'tab-label' }, 'Buscar')),
     h('button', { type: 'button', class: 'tab tab-settings', onclick: openSettings, 'aria-label': 'Ajustes' },
       h('span', { class: 'tab-icon' }, icon('settings', 22)), h('span', { class: 'tab-label' }, 'Ajustes')));
 
@@ -73,6 +76,14 @@ async function main() {
     if (document.visibilityState === 'visible' && new Date().toDateString() !== lastDay) {
       lastDay = new Date().toDateString();
       views[active]?.refresh();
+    }
+  });
+
+  // Ctrl+K (ou Cmd+K) abre a busca no PC
+  addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (!document.querySelector('.search-sheet')) openSearch();
     }
   });
 

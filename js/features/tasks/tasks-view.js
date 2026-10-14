@@ -13,6 +13,7 @@ import { taskNav, viewKey } from './task-nav.js';
 import { createQuickAdd } from './quick-add.js';
 import { statsLine, openStats } from './stats.js';
 import { openSettings } from '../settings/settings-view.js';
+import { openSearch } from '../search/search.js';
 
 const EMPTY = {
   hoje: ['sun', 'Tudo em dia!', 'Nenhuma tarefa para hoje. Adicione abaixo ou aproveite o dia.'],
@@ -20,12 +21,10 @@ const EMPTY = {
   concluidas: ['checkCircle', 'Nada concluído ainda', 'As tarefas concluídas ficam guardadas aqui.'],
   projeto: ['folder', 'Projeto vazio', 'Adicione a primeira tarefa deste projeto abaixo.'],
   etiqueta: ['tag', 'Nenhuma tarefa', 'Nenhuma tarefa pendente com esta etiqueta.'],
-  busca: ['search', 'Nada encontrado', 'Tente outras palavras.'],
 };
 
 export function createTasksView() {
   let view = { key: 'entrada' }; // visão principal ao abrir o app
-  let search = '';
   const priorities = new Set();
   const expanded = new Set();
   let navSheet = null;
@@ -36,14 +35,6 @@ export function createTasksView() {
   const subtitle = h('div', { class: 'view-subtitle' });
   const titleBtn = h('button', { type: 'button', class: 'view-title-btn', onclick: openNavSheet, 'aria-label': 'Escolher visão' },
     titleText, h('span', { class: 'title-chevron' }, icon('chevronDown', 18)));
-
-  const searchInput = h('input', {
-    class: 'search-input', type: 'search', placeholder: 'Buscar tarefas', enterkeyhint: 'search',
-    oninput: () => { search = searchInput.value; renderList(); },
-  });
-  const searchBar = h('div', { class: 'search-bar', hidden: true },
-    icon('search', 18), searchInput,
-    h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Fechar busca', onclick: closeSearch }, icon('x', 18)));
 
   const filterBtn = h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Ordenar e filtrar', onclick: openFilters }, icon('sort'));
   const header = h('header', { class: 'view-header' },
@@ -59,7 +50,7 @@ export function createTasksView() {
   const sidebar = h('aside', { class: 'tasks-sidebar' });
   const el = h('section', { class: 'view view-tasks' },
     sidebar,
-    h('div', { class: 'tasks-main' }, header, searchBar, body, quick.el));
+    h('div', { class: 'tasks-main' }, header, body, quick.el));
 
   // ---------- comportamento ----------
   function getDefaults() {
@@ -71,17 +62,6 @@ export function createTasksView() {
 
   function go(v) {
     navigate(`tarefas/${viewKey(v)}`);
-  }
-
-  function openSearch() {
-    searchBar.hidden = false;
-    searchInput.focus();
-  }
-  function closeSearch() {
-    search = '';
-    searchInput.value = '';
-    searchBar.hidden = true;
-    renderList();
   }
 
   function openNavSheet() {
@@ -146,9 +126,9 @@ export function createTasksView() {
 
   function renderList() {
     const sort = store.getSettings().taskSort;
-    const groups = groupsFor(view, { sort, search, priorities });
+    const groups = groupsFor(view, { sort, priorities });
     const out = [];
-    if (view.key === 'hoje' && !search) {
+    if (view.key === 'hoje') {
       const line = statsLine(openStats);
       if (line) out.push(line);
     }
@@ -167,7 +147,7 @@ export function createTasksView() {
               : h('span', { class: 'group-title' }, title),
             sub ? h('span', { class: 'group-sub' }, sub) : null,
             h('span', { class: 'group-count' }, g.tasks.length ? String(g.tasks.length) : ''),
-            g.overdue && !search ? h('button', { type: 'button', class: 'link-btn', onclick: () => {
+            g.overdue ? h('button', { type: 'button', class: 'link-btn', onclick: () => {
               const n = rescheduleOverdueToToday();
               if (n) undoToast(`${n} tarefa${n > 1 ? 's' : ''} movida${n > 1 ? 's' : ''} para hoje`);
             } }, 'Reagendar') : null)
@@ -179,7 +159,7 @@ export function createTasksView() {
       out.push(h('section', { class: `task-group ${g.dateGroup ? 'date-group' : ''}` }, head, h('div', { class: 'task-list' }, rows)));
     }
     if (!total) {
-      const [ic, t, d] = EMPTY[search ? 'busca' : view.key] || EMPTY.entrada;
+      const [ic, t, d] = EMPTY[view.key] || EMPTY.entrada;
       out.push(h('div', { class: 'empty' }, h('div', { class: 'empty-icon' }, icon(ic, 28)), h('h3', null, t), h('p', null, d)));
     }
     render(listEl, out);

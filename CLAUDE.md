@@ -58,7 +58,9 @@ js/ui/               dom.js (helper h(), render(), segmented) · icons.js (SVG) 
                      toast.js (aviso + Desfazer) · swipe.js (deslizar linha)
 js/features/
   tasks/             task-service (regras/visões/estatísticas) · nlp (linguagem natural) · tasks-view · task-row · task-nav · quick-add · stats
-  calendar/          calendar-view · occurrences (junta eventos+tarefas, colunas de sobreposição) · ics (exportação)
+  calendar/          calendar-view · occurrences (junta eventos+tarefas+feriados, colunas de sobreposição) · ics (exportação)
+                     holidays (feriados BR + SP + Jundiaí + Limeira, Páscoa calculada)
+  search/search.js   busca global (tarefas, eventos, itens de compra) num painel
   shopping/          shopping-service · shopping-view · categories (corredores + palavras-chave) · parse-item ("2 kg arroz")
   editor/editor.js   editor único de tarefa/evento/os dois
   settings/          settings-view · palettes · backup (JSON + dados de exemplo)
@@ -84,7 +86,7 @@ js/features/
 - `lists`: name, order · `items`: listId, name, qty, unit, note, price (por unidade), category, bought, boughtAt, order
 - `catalog`: histórico de itens (id = nome normalizado) para autocompletar/sugestões/categoria aprendida
 - `log`: conclusões de tarefas (estatísticas e sequência)
-- `meta/settings`: theme, palette, weekStart, calendarView, defaultEventDuration, taskSort, showDoneInCalendar, lastListId
+- `meta/settings`: theme, palette, weekStart, calendarView, defaultEventDuration, taskSort, showDoneInCalendar, lastListId, holidays {br, jundiai, limeira, facultativos}
 
 ### Sincronização futura (preparado)
 
@@ -94,6 +96,8 @@ IDs UUID, `updatedAt` em todo registro, exclusão lógica e uma única camada de
 
 ### Feitas (v0.1)
 - **Entrada = todas as tarefas pendentes** (com ou sem projeto), pedido do usuário. Projetos continuam filtrando só as suas tarefas.
+- **Busca global**: lupa em Tarefas e Compras, item "Buscar" no ⋯ do Calendário, "Buscar" na barra lateral do PC e Ctrl+K. Não fica fixa na tela (pedido do usuário). Item de compra encontrado abre a lista e pisca o item (`#/compras/<lista>/<item>`).
+- **Feriados no calendário**: nacionais, SP (9/7), Jundiaí (Paixão, Corpus Christi, Padroeira 15/8) e Limeira (Aniversário 15/9, Corpus Christi pela Lei 1.038/1968 — não 100% confirmado). Municipais mostram a cidade no nome. Ajustes → Feriados liga/desliga cada grupo (`settings.holidays`). Toque no feriado mostra detalhes.
 - **Entrada separada em grupos**: **Sem data** · **Atrasadas** · **Próximos** (este sempre por data/hora: hoje, amanhã…). Dentro de "Sem data" vale a ordenação escolhida no filtro.
 - **Visão Próximos**: agrupada por dia, mostrando **só os dias que têm tarefas** (sem dias vazios nem "Planejar algo"), pedido do usuário.
 - **Entrada é a visão principal**: o app sempre abre nela (`start_url` sem hash → `tarefas/entrada`). Voltar para a aba Tarefas mantém a visão em que o usuário estava.

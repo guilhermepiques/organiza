@@ -145,26 +145,15 @@ export const SORT_OPTIONS = [
   { value: 'created', label: 'Mais recentes primeiro' },
 ];
 
-function matchesSearch(t, q) {
-  const hay = normalize([t.title, t.notes, ...(t.labels || []), ...(t.subtasks || []).map((s) => s.title)].join(' '));
-  return q.split(/\s+/).every((w) => hay.includes(w));
-}
-
 /**
- * Monta os grupos de tarefas de uma visão.
+ * Monta os grupos de tarefas de uma visão. (A busca fica em features/search.)
  * @returns {Array<{ id, title, tasks, tone?, dateGroup? }>}
  */
-export function groupsFor(view, { sort = 'smart', search = '', priorities = null } = {}) {
+export function groupsFor(view, { sort = 'smart', priorities = null } = {}) {
   const today = todayISO();
   const sorter = SORTERS[sort] || SORTERS.smart;
   let tasks = store.all('tasks');
-  const q = normalize(search);
   if (priorities?.size) tasks = tasks.filter((t) => priorities.has(t.priority));
-
-  if (q) {
-    const res = tasks.filter((t) => matchesSearch(t, q)).sort((a, b) => a.done - b.done || sorter(a, b));
-    return [{ id: 'busca', title: `${res.length} resultado${res.length === 1 ? '' : 's'}`, tasks: res }];
-  }
 
   const open = tasks.filter((t) => !t.done);
   const overdue = (list) => list.filter((t) => t.date && t.date < today).sort(sorter);

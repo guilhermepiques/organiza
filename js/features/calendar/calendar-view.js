@@ -7,7 +7,7 @@ import { toast } from '../../ui/toast.js';
 import * as store from '../../core/store.js';
 import {
   todayISO, addDays, addMonths, startOfWeek, startOfMonth, fromISO, weekday, diffDays,
-  MONTHS, MONTHS_SHORT, WEEKDAYS_SHORT, minToTime, nowMinutes,
+  MONTHS, MONTHS_SHORT, WEEKDAYS_SHORT, minToTime, nowMinutes, longLabel,
 } from '../../core/date.js';
 import { capitalize } from '../../core/util.js';
 import { occurrencesForRange, layoutColumns } from './occurrences.js';
@@ -15,6 +15,7 @@ import { exportICS } from './ics.js';
 import { openEditor, openNewEvent } from '../editor/editor.js';
 import { completeWithFeedback } from '../tasks/task-row.js';
 import { openSettings } from '../settings/settings-view.js';
+import { openSearch } from '../search/search.js';
 
 const HOUR_H = 52; // altura de 1 hora em px
 const MODES = [
@@ -47,6 +48,7 @@ export function createCalendarView() {
       h('button', { type: 'button', class: 'btn btn-sm', onclick: () => { anchor = todayISO(); lastRangeKey = ''; refresh(); } }, 'Hoje'),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Anterior', onclick: () => step(-1) }, icon('chevronLeft')),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Próximo', onclick: () => step(1) }, icon('chevronRight')),
+      h('button', { type: 'button', class: 'icon-btn hide-mobile', 'aria-label': 'Buscar', onclick: openSearch }, icon('search')),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Mais opções', onclick: openMore }, icon('more')),
       h('button', { type: 'button', class: 'icon-btn hide-mobile', 'aria-label': 'Ajustes', onclick: openSettings }, icon('settings'))));
 
@@ -86,6 +88,7 @@ export function createCalendarView() {
     openMenu({
       title: 'Calendário',
       items: [
+        { label: 'Buscar', icon: 'search', onClick: openSearch },
         { label: 'Novo evento', icon: 'plus', onClick: () => openNewEvent(anchor, '09:00') },
         { label: 'Nova tarefa no calendário', icon: 'tasks', onClick: () => openEditor({ type: 'task', defaults: { date: anchor, block: true } }) },
         { separator: true },
@@ -124,8 +127,20 @@ export function createCalendarView() {
 
   // ---------- itens ----------
   function openItem(it) {
+    if (it.kind === 'holiday') return openHoliday(it);
     if (it.kind === 'event') openEditor({ id: it.id, type: 'event' });
     else openEditor({ id: it.id, type: 'task' });
+  }
+
+  function openHoliday(it) {
+    openSheet({
+      title: it.name,
+      size: 'small',
+      body: h('div', { class: 'stack' },
+        h('p', { class: 'holiday-date' }, capitalize(longLabel(it.date, true))),
+        h('p', { class: 'muted' }, it.detail),
+        h('p', { class: 'muted small' }, 'Os feriados exibidos podem ser escolhidos em Ajustes → Feriados.')),
+    });
   }
 
   function checkFor(it) {
@@ -140,7 +155,7 @@ export function createCalendarView() {
     }, icon('check', 10));
   }
 
-  const colorOf = (it) => (it.kind === 'task' && !it.block ? `var(--p${it.priority || 4}-c)` : it.color || 'var(--accent)');
+  const colorOf = (it) => (it.kind === 'holiday' ? 'var(--danger)' : it.kind === 'task' && !it.block ? `var(--p${it.priority || 4}-c)` : it.color || 'var(--accent)');
 
   function chip(it) {
     return h('div', {
@@ -264,7 +279,7 @@ export function createCalendarView() {
       const date = d;
       cells.push(h('button', {
         type: 'button',
-        class: `cal-mcell ${fromISO(d).getMonth() !== month ? 'other' : ''} ${d === today ? 'today' : ''}`,
+        class: `cal-mcell ${fromISO(d).getMonth() !== month ? 'other' : ''} ${d === today ? 'today' : ''} ${day.allDay.some((x) => x.kind === 'holiday' && x.holidayKind === 'feriado') ? 'is-holiday' : ''}`,
         onclick: () => setMode('day', date),
       },
       h('span', { class: 'cal-mnum' }, String(fromISO(d).getDate())),

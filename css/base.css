@@ -57,7 +57,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 .tab-icon { width: 56px; height: 30px; border-radius: 15px; display: grid; place-items: center; transition: background .2s var(--ease), color .2s; }
 .tab[aria-current] { color: var(--text); }
 .tab[aria-current] .tab-icon { background: var(--accent-soft); color: var(--accent); }
-.tab-settings { display: none; }
+.tab-settings, .tab-search { display: none; }
 
 /* ---------- cabeçalho das abas ---------- */
 .view-header {
@@ -97,6 +97,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
   .tab { flex: none; height: 42px; flex-direction: row; justify-content: flex-start; gap: 12px; padding: 0 10px; border-radius: 10px; font-size: 14.5px; color: var(--text-2); }
   .tab-icon { width: auto; height: auto; background: none !important; color: inherit !important; }
   .tab[aria-current] { background: var(--accent-soft); color: var(--text); font-weight: 600; }
+  .tab-search { display: flex; margin-top: 12px; }
   .tab-settings { display: flex; margin-top: auto; }
   .hide-mobile { display: inline-grid !important; }
   .hide-desktop { display: none !important; }

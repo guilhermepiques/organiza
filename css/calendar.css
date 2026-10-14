@@ -28,6 +28,10 @@
   background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: var(--text); cursor: pointer;
 }
 .cal-chip.kind-event { background: var(--c); color: #fff; }
+.cal-chip.kind-holiday { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); color: var(--danger); font-weight: 600; }
+.cal-mcell.is-holiday:not(.today) .cal-mnum { color: var(--danger); }
+.cal-mitem.kind-holiday span { color: var(--danger); }
+.holiday-date { font-weight: 600; }
 .cal-chip-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cal-chip.done { opacity: .55; }
 .cal-chip.done .cal-chip-title { text-decoration: line-through; }

@@ -18,14 +18,17 @@ import { parseItem, UNITS } from './parse-item.js';
 import { categoryById } from './categories.js';
 import { openEditor } from '../editor/editor.js';
 import { openSettings } from '../settings/settings-view.js';
+import { openSearch } from '../search/search.js';
 
 export function createShoppingView() {
   let listId = null;
+  let highlightId = null; // item vindo da busca, destacado por alguns instantes
 
   // ---------- cabeçalho ----------
   const header = h('header', { class: 'view-header' },
     h('div', { class: 'view-heading' }, h('h1', { class: 'view-title' }, 'Compras')),
     h('div', { class: 'header-actions' },
+      h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Buscar', onclick: openSearch }, icon('search')),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Compartilhar lista', onclick: share }, icon('share')),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Opções da lista', onclick: listMenu }, icon('more')),
       h('button', { type: 'button', class: 'icon-btn hide-desktop', 'aria-label': 'Ajustes', onclick: openSettings }, icon('settings'))));
@@ -271,7 +274,7 @@ export function createShoppingView() {
 
   function itemRow(it) {
     const total = lineTotal(it);
-    const content = h('div', { class: `shop-row ${it.bought ? 'bought' : ''}`, onclick: () => openItem(it) },
+    const content = h('div', { class: `shop-row ${it.bought ? 'bought' : ''}`, dataset: { id: it.id }, onclick: () => openItem(it) },
       h('button', {
         type: 'button', class: `box ${it.bought ? 'is-done' : ''}`, 'aria-label': it.bought ? 'Desmarcar' : 'Marcar como comprado',
         onclick: (e) => { e.stopPropagation(); vibrate(8); e.currentTarget.classList.add('pop'); setTimeout(() => toggleItem(it.id), 160); },
@@ -328,6 +331,13 @@ export function createShoppingView() {
       out.unshift(h('div', { class: 'all-done' }, icon('checkCircle', 18), 'Tudo no carrinho!'));
     }
     render(content, out);
+    if (highlightId) {
+      const row = content.querySelector(`.shop-row[data-id="${CSS.escape(highlightId)}"]`);
+      if (row) {
+        row.scrollIntoView({ block: 'center' });
+        row.classList.add('flash');
+      }
+    }
 
     const t = listTotals(listId);
     totalBar.hidden = !t.priced;
@@ -352,6 +362,11 @@ export function createShoppingView() {
     const settings = store.getSettings();
     listId = (wanted && store.get('lists', wanted) ? wanted : null) || (store.get('lists', settings.lastListId) ? settings.lastListId : lists()[0]?.id);
     if (settings.lastListId !== listId) store.setSettings({ lastListId: listId });
+    // veio da busca (#/compras/<lista>/<item>): rola até o item e destaca (aplicado em renderContent)
+    if (parts[1]) {
+      highlightId = parts[1];
+      setTimeout(() => { highlightId = null; }, 1600);
+    }
     refresh();
   }
 

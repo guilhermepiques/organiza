@@ -8,6 +8,7 @@ import * as store from '../../core/store.js';
 import { applyTheme, resolveMode } from '../../core/theme.js';
 import { durationLabel } from '../../core/date.js';
 import { PALETTES } from './palettes.js';
+import { HOLIDAY_REGIONS, DEFAULT_HOLIDAY_SETTINGS } from '../calendar/holidays.js';
 import { exportBackup, readBackupFile, importBackup, loadSampleData } from './backup.js';
 import { notificationStatus, ensureNotificationPermission } from '../reminders/reminders.js';
 import { installState, promptInstall } from '../../pwa.js';
@@ -52,6 +53,16 @@ export function openSettings() {
     (v) => store.setSettings({ weekStart: Number(v) }));
   const durSelect = h('select', { class: 'input input-compact', onchange: () => store.setSettings({ defaultEventDuration: Number(durSelect.value) }) },
     [0, 15, 30, 45, 60, 90, 120].map((d) => h('option', { value: String(d), selected: d === s.defaultEventDuration }, durationLabel(d))));
+
+  // ----- feriados -----
+  const holidayChecks = HOLIDAY_REGIONS.map((r) => {
+    const cur = { ...DEFAULT_HOLIDAY_SETTINGS, ...(s.holidays || {}) };
+    const input = h('input', { type: 'checkbox', checked: !!cur[r.id], onchange: () => {
+      const now = { ...DEFAULT_HOLIDAY_SETTINGS, ...(store.getSettings().holidays || {}) };
+      store.setSettings({ holidays: { ...now, [r.id]: input.checked } });
+    } });
+    return h('label', { class: 'check-label' }, input, r.name);
+  });
 
   // ----- lembretes -----
   const notifState = h('div', { class: 'settings-control' });
@@ -105,6 +116,9 @@ export function openSettings() {
     section('Calendário',
       row('Semana começa no', weekSwitch),
       row('Duração padrão de evento', durSelect)),
+    section('Feriados no calendário',
+      h('div', { class: 'stack-sm' }, holidayChecks),
+      h('p', { class: 'muted small' }, 'Municipais aparecem com o nome da cidade, ex.: "Corpus Christi (Jundiaí, Limeira)".')),
     section('Lembretes',
       row('Notificações', notifState, 'Funcionam com o app aberto ou recém-usado (limite do navegador, sem servidor).')),
     section('Instalar no celular', installBox),

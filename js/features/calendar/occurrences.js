@@ -3,10 +3,11 @@
 import * as store from '../../core/store.js';
 import { addDays, timeToMin } from '../../core/date.js';
 import { occurrencesInRange } from '../../core/recurrence.js';
+import { holidaysBetween, DEFAULT_HOLIDAY_SETTINGS } from './holidays.js';
 
 /**
  * @returns {Map<string, { allDay: Item[], timed: Item[] }>} por data "AAAA-MM-DD"
- * Item: { kind: 'event'|'task', id, title, date, start, end, color, done, priority, block, recurring }
+ * Item: { kind: 'event'|'task'|'holiday', id, title, date, start, end, color, done, priority, block, recurring, detail }
  */
 export function occurrencesForRange(from, to) {
   const settings = store.getSettings();
@@ -18,6 +19,13 @@ export function occurrencesForRange(from, to) {
     if (!day) return;
     (item.start == null ? day.allDay : day.timed).push(item);
   };
+
+  // feriados primeiro (aparecem no topo do dia)
+  for (const [date, list] of holidaysBetween(from, to, { ...DEFAULT_HOLIDAY_SETTINGS, ...(settings.holidays || {}) })) {
+    for (const hol of list) {
+      put({ kind: 'holiday', id: hol.id, title: hol.label, name: hol.name, detail: hol.detail, holidayKind: hol.kind, date, start: null });
+    }
+  }
 
   for (const e of store.all('events')) {
     if (!e.date) continue;
@@ -48,7 +56,8 @@ export function occurrencesForRange(from, to) {
   }
 
   for (const day of out.values()) {
-    day.allDay.sort((a, b) => (a.kind === b.kind ? a.title.localeCompare(b.title) : a.kind === 'event' ? -1 : 1));
+    const rank = { holiday: 0, event: 1, task: 2 };
+    day.allDay.sort((a, b) => rank[a.kind] - rank[b.kind] || a.title.localeCompare(b.title));
     day.timed.sort((a, b) => a.start - b.start || b.end - a.end);
   }
   return out;

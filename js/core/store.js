@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS = {
   defaultEventDuration: 60,
   taskSort: 'smart', // smart | date | priority | name | created
   showDoneInCalendar: true,
+  holidays: { br: true, jundiai: true, limeira: true, facultativos: true }, // feriados no calendário
   lastListId: null,
 };
 
